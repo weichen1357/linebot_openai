@@ -26,7 +26,7 @@ def scrape_anime_season(url):
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
-        app.logger.info("Request body: " + body)
+    app.logger.info("Request body: " + body)
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
