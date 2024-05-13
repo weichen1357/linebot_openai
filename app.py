@@ -1,49 +1,45 @@
 from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
+from linebot import (
+    LineBotApi, WebhookHandler
+)
+from linebot.exceptions import (
+    InvalidSignatureError
+)
 from linebot.models import *
-import json
-import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 import time
+import os
 
-# Initialize Flask app
 app = Flask(__name__)
-
-# Initialize Line Bot API
+static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
-# Define function to scrape data and save it to a JSON file
-def scrape_and_save_data():
-    options = webdriver.ChromeOptions()
-    service = ChromeService(executable_path="chromedriver.exe")
-    driver = webdriver.Chrome(service=service, options=options)
+# 創建 Chrome Webdriver
+options = webdriver.ChromeOptions()
+service = ChromeService(executable_path="chromedriver.exe")
+driver = webdriver.Chrome(service=service, options=options)
 
+def crawl_exhibition_data(category):
     try:
         driver.get("https://www.ccpa.org.tw/tica/data_more.php?pid=334574&tpl=")
         time.sleep(3)
 
         container_elements = driver.find_elements(By.CLASS_NAME, "container")
-        anime_data = []
+        exhibition_data = []
         for container_element in container_elements:
             w_black_elements = container_element.find_elements(By.CLASS_NAME, "w_black")
             for w_black_element in w_black_elements:
-                title = w_black_element.text
+                link_text = w_black_element.text
                 link_url = w_black_element.get_attribute("href")
-                anime_data.append({"title": title, "link": link_url})
-
-        with open('anime_data.json', 'w') as file:
-            json.dump(anime_data, file)
-
+                exhibition_data.append(f"<a href='{link_url}'>{link_text}</a>")
+        return exhibition_data
     except Exception as e:
-        print("Error:", str(e))
-    finally:
-        driver.quit()
+        print("發生錯誤:", str(e))
+        return []
 
-# Listen for POST requests from /callback
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
@@ -55,27 +51,41 @@ def callback():
         abort(400)
     return 'OK'
 
-# Handle message events
-@handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
-    message_text = event.message.text
-    if message_text == "/爬取動畫":
-        # Call the scraping function to scrape anime data and save it
-        scrape_and_save_data()
-        # Read the scraped data from the JSON file
-        with open('anime_data.json', 'r') as file:
-            anime_data = json.load(file)
-        # Build reply message text
-        reply_text = ""
-        for anime in anime_data:
-            reply_text += f"{anime['title']} - {anime['link']}\n"
-        # Reply to the user with scraped anime data
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=reply_text)
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    user_id = event.source.user_id
+    if event.postback.data == "ACG_EXHIBITION":
+        buttons_template_message = TemplateSendMessage(
+            alt_text='ACG展覽選單',
+            template=ButtonsTemplate(
+                title='ACG展覽',
+                text='請選擇類別',
+                actions=[
+                    PostbackAction(label='A動漫', data='ANIME_EXHIBITION'),
+                    PostbackAction(label='C漫畫', data='COMIC_EXHIBITION'),
+                    PostbackAction(label='G電玩', data='GAME_EXHIBITION'),
+                ]
+            )
         )
+        line_bot_api.reply_message(event.reply_token, buttons_template_message)
+    elif event.postback.data.startswith("EXHIBITION_"):
+        category = event.postback.data.split("_")[-1]
+        exhibition_data = crawl_exhibition_data(category)
+        if exhibition_data:
+            message = "\n".join(exhibition_data)
+            line_bot_api.push_message(user_id, TextSendMessage(text=message))
+        else:
+            line_bot_api.push_message(user_id, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
 
-# Main program entry point
+@handler.add(MemberJoinedEvent)
+def welcome(event):
+    uid = event.joined.members[0].user_id
+    gid = event.source.group_id
+    profile = line_bot_api.get_group_member_profile(gid, uid)
+    name = profile.display_name
+    message = TextSendMessage(text=f'{name}歡迎加入')
+    line_bot_api.reply_message(event.reply_token, message)
+
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
