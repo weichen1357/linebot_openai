@@ -18,12 +18,11 @@ line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 # 創建 Chrome Webdriver
-
+options = webdriver.ChromeOptions()
+service = ChromeService(executable_path="chromedriver.exe")
+driver = webdriver.Chrome(service=service, options=options)
 
 def crawl_exhibition_data(category):
-    options = webdriver.ChromeOptions()
-    service = ChromeService(executable_path="chromedriver.exe")
-    driver = webdriver.Chrome(service=service, options=options)
     try:
         driver.get("https://www.ccpa.org.tw/tica/data_more.php?pid=334574&tpl=")
         time.sleep(3)
@@ -69,8 +68,8 @@ def handle_postback(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, buttons_template_message)
-    elif event.postback.data.startswith("EXHIBITION_"):
-        category = event.postback.data.split("_")[-1]
+    elif event.postback.data == "ANIME_EXHIBITION":  # 添加對"A動漫"按鈕的處理
+        category = "A"  # 假設爬蟲程式碼中用"A"表示動漫
         exhibition_data = crawl_exhibition_data(category)
         if exhibition_data:
             message = "\n".join(exhibition_data)
