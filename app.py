@@ -4,10 +4,11 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import *
 
 # 匯入你的爬蟲程式碼
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service as ChromeService
-import time
+import json
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import os
 
 # 初始化 Flask 應用
 app = Flask(__name__)
@@ -16,37 +17,16 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
-# 爬取指定網頁的函數
-def scrape_website():
-    options = webdriver.ChromeOptions()
-    service = ChromeService(executable_path="chromedriver.exe")
-    driver = webdriver.Chrome(service=service, options=options)
-
-    try:
-        driver.get("https://www.ccpa.org.tw/tica/data_more.php?pid=334574&tpl=")
-        time.sleep(3)
-
-        container_elements = driver.find_elements(By.CLASS_NAME, "container")
-        scraped_content = "最新消息:\n"
-        for container_element in container_elements:
-            w_black_elements = container_element.find_elements(By.CLASS_NAME, "w_black")
-            for w_black_element in w_black_elements:
-                link_text = w_black_element.text
-                link_url = w_black_element.get_attribute("href")
-                hyperlink = f"<a href='{link_url}'>{link_text}</a>"
-                scraped_content += hyperlink + "\n"
-        return scraped_content
-    except Exception as e:
-        return "爬蟲出現錯誤: " + str(e)
-    finally:
-        driver.close()
+# 爬取指定季節的動畫資訊並回傳
+def scrape_anime_season(url):
+    # 爬蟲程式碼與函數內容請參考你原本的程式碼
+    pass
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+        app.logger.info("Request body: " + body)
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
@@ -57,17 +37,23 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     message_text = event.message.text
-    if message_text == "/爬取":
+    if message_text == "/爬取動畫":
         # 呼叫爬蟲函數爬取網頁內容
-        scraped_content = scrape_website()
+        scrape_anime_season('https://myanimelist.net/anime/season/2024/spring')
+        # 讀取爬取到的資料
+        with open('2024-spring-combined.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        # 建立回覆訊息的文字內容
+        reply_text = ""
+        for anime in data:
+            reply_text += f"{anime['title']} - {anime['release_date']}\n"
         # 將爬取到的內容回傳給使用者
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=scraped_content)
+            TextSendMessage(text=reply_text)
         )
 
 # 主程式入口
-import os
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
