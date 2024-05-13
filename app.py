@@ -58,7 +58,7 @@ def handle_postback(event):
         buttons_template_message = TemplateSendMessage(
             alt_text='ACG展覽選單',
             template=ButtonsTemplate(
-                title='ACG展覽',
+                title='ACG展覽資訊',
                 text='請選擇類別',
                 actions=[
                     PostbackAction(label='A動漫', data='ANIME_EXHIBITION'),
