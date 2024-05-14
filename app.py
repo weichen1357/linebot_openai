@@ -60,7 +60,9 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_id = event.source.user_id
+    print("Received message:", event.message.text)
     if event.message.text == "ACG展覽資訊":
+        print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
             text="@{} 您好，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇你想了解的相關資訊吧！".format(user_id),
             quick_reply=QuickReply(
@@ -72,11 +74,15 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    else:
+        print("Other message received")
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
     user_id = event.source.user_id
+    print("Received postback event:", event.postback.data)
     if event.postback.data == "ANIME_EXHIBITION":
+        print("ANIME_EXHIBITION button clicked")
         category = "A"
         exhibition_data = crawl_exhibition_data(category)
         if exhibition_data:
@@ -84,6 +90,8 @@ def handle_postback(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
+    else:
+        print("Other postback event received")
 
 @handler.add(MemberJoinedEvent)
 def welcome(event):
