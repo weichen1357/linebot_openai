@@ -7,8 +7,8 @@ from linebot.exceptions import (
 )
 from linebot.models import *
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 import time
 import os
 
@@ -17,12 +17,12 @@ static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
-# 設置 Chrome Driver 路徑
+# 设置 Chrome Driver 路径
 CHROME_DRIVER_PATH = "/path/to/chromedriver"
 
-# 創建 Chrome Webdriver
+# 创建 Chrome Webdriver
 def crawl_exhibition_data(category):
-    options = webdriver.ChromeOptions()
+    options = ChromeOptions()
     options.add_argument('--headless')  # 使用 Chrome Headless 模式
     service = ChromeService(executable_path=CHROME_DRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
