@@ -17,11 +17,14 @@ static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
-# 創建 Chrome Webdriver
+# 設置 Chrome Driver 路徑
+CHROME_DRIVER_PATH = "/path/to/chromedriver"
 
+# 創建 Chrome Webdriver
 def crawl_exhibition_data(category):
     options = webdriver.ChromeOptions()
-    service = ChromeService(executable_path="chromedriver.exe")
+    options.add_argument('--headless')  # 使用 Chrome Headless 模式
+    service = ChromeService(executable_path=CHROME_DRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
     try:
         driver.get("https://www.ccpa.org.tw/tica/data_more.php?pid=334574&tpl=")
@@ -39,12 +42,14 @@ def crawl_exhibition_data(category):
     except Exception as e:
         print("發生錯誤:", str(e))
         return []
+    finally:
+        driver.quit()  # 關閉瀏覽器
 
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
     body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+    app.logger.info("請求內容: " + body)
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
@@ -56,7 +61,7 @@ def handle_postback(event):
     user_id = event.source.user_id
     if event.postback.data == "ACG_EXHIBITION":
         buttons_template_message = TemplateSendMessage(
-            alt_text='ACG展覽選單',
+            alt_text='ACG展覽資訊',
             template=ButtonsTemplate(
                 title='ACG展覽資訊',
                 text='請選擇類別',
@@ -68,23 +73,22 @@ def handle_postback(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, buttons_template_message)
-    elif event.postback.data == "ANIME_EXHIBITION":  # 添加對"A動漫"按鈕的處理
-        category = "A"  # 假設爬蟲程式碼中用"A"表示動漫
+    elif event.postback.data == "ANIME_EXHIBITION":
+        category = "A"
         exhibition_data = crawl_exhibition_data(category)
         if exhibition_data:
             message = "\n".join(exhibition_data)
-            line_bot_api.push_message(user_id, TextSendMessage(text=message))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.push_message(user_id, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
 
 @handler.add(MemberJoinedEvent)
 def welcome(event):
-    uid = event.joined.members[0].user_id
     gid = event.source.group_id
-    profile = line_bot_api.get_group_member_profile(gid, uid)
+    profile = line_bot_api.get_group_member_profile(gid, event.joined.members[0].user_id)
     name = profile.display_name
-    message = TextSendMessage(text=f'{name}歡迎加入')
-    line_bot_api.reply_message(event.reply_token, message)
+    message = TextSendMessage(text=f'{name} 歡迎加入')
+    line_bot_api.push_message(gid, message)
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
