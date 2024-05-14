@@ -9,6 +9,7 @@ from linebot.models import *
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.common.by import By
 import time
 import os
 
@@ -56,24 +57,26 @@ def callback():
         abort(400)
     return 'OK'
 
-@handler.add(PostbackEvent)
-def handle_postback(event):
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
     user_id = event.source.user_id
-    if event.postback.data == "ACG_EXHIBITION":
-        buttons_template_message = TemplateSendMessage(
-            alt_text='ACG展覽資訊',
-            template=ButtonsTemplate(
-                title='ACG展覽資訊',
-                text='請選擇類別',
-                actions=[
-                    PostbackAction(label='A動漫', data='ANIME_EXHIBITION'),
-                    PostbackAction(label='C漫畫', data='COMIC_EXHIBITION'),
-                    PostbackAction(label='G電玩', data='GAME_EXHIBITION'),
+    if event.message.text == "ACG展覽資訊":
+        reply_message = TextSendMessage(
+            text="@{} 您好，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇你想了解的相關資訊吧！".format(user_id),
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=PostbackAction(label="A：動漫", data="ANIME_EXHIBITION")),
+                    QuickReplyButton(action=PostbackAction(label="C：漫畫", data="COMIC_EXHIBITION")),
+                    QuickReplyButton(action=PostbackAction(label="G：電玩", data="GAME_EXHIBITION"))
                 ]
             )
         )
-        line_bot_api.reply_message(event.reply_token, buttons_template_message)
-    elif event.postback.data == "ANIME_EXHIBITION":
+        line_bot_api.reply_message(event.reply_token, reply_message)
+
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    user_id = event.source.user_id
+    if event.postback.data == "ANIME_EXHIBITION":
         category = "A"
         exhibition_data = crawl_exhibition_data(category)
         if exhibition_data:
