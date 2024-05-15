@@ -83,7 +83,7 @@ def handle_postback(event):
     print("Received postback event:", event.postback.data)
     if event.postback.data == "ANIME_EXHIBITION":
         print("ANIME_EXHIBITION button clicked")
-        category = "A動漫"
+        category = "A:動漫"
         exhibition_data = crawl_exhibition_data(category)
         if exhibition_data:
             message = "\n".join(exhibition_data)
