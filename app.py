@@ -62,7 +62,7 @@ def handle_postback(event):
             )
         ]
         line_bot_api.reply_message(event.reply_token, reply_messages)
-    elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
+    elif event.postback.data.endswith("冬") or event.postback.data.endswith("春") or event.postback.data.endswith("夏") or event.postback.data.endswith("秋"):
         print("Season selected:", event.postback.data)
         # Here you can handle the selection of the season
         pass
