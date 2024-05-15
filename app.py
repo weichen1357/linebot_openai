@@ -74,6 +74,18 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "本季度新番":
+        print("本季度新番 button clicked")
+        reply_message = TextSendMessage(
+            text="請選擇年份",
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
+                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
     else:
         print("Other message received")
 
