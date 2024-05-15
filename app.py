@@ -118,6 +118,10 @@ def handle_postback(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
+        print("Season selected:", event.postback.data)
+        # Here you can handle the selection of the season
+        pass
     else:
         print("Other postback event received")
 
