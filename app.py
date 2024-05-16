@@ -78,7 +78,7 @@ def handle_message(event):
     elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，請選擇年份".format(user_name),
+            text="@{} 您好，歡迎使用"本季度新番，請先選擇服務項目。".format(user_name),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="2023", text="2023")),
@@ -96,7 +96,7 @@ def handle_message(event):
 
         quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=event.message.text + season)) for season in seasons]
         reply_message = TextSendMessage(
-            text="@{} 您好，請選擇季度項目".format(user_name),
+            text="@{} 您好，接著請選擇季度項目".format(user_name),
             quick_reply=QuickReply(items=quick_reply_items)
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
