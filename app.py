@@ -90,31 +90,39 @@ def handle_message(event):
     else:
         print("Other message received")
 
-@handler.add(MessageEvent, message=TextMessage)
-def handle_year_selection(event):
+@handler.add(PostbackEvent)
+def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
-    if event.message.text in ["2023", "2024"]:
-        print("Year selected:", event.message.text)
-        year = event.message.text
-        if year == "2023":
+    print("Received postback event:", event.postback.data)
+    if event.postback.data == "ANIME_EXHIBITION":
+        print("ANIME_EXHIBITION button clicked")
+        category = "A:動漫"
+        exhibition_data = crawl_exhibition_data(category)
+        if exhibition_data:
+            message = "\n".join(exhibition_data)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
+    elif event.postback.data == "2023" or event.postback.data == "2024":
+        print("Year selected:", event.postback.data)
+        if event.postback.data == "2023":
             seasons = ["冬", "春", "夏", "秋"]
         else:
             seasons = ["冬", "春"]
-        
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=year + season)) for season in seasons]
+
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=event.postback.data + season)) for season in seasons]
         reply_message = TextSendMessage(
-            text="@{} 您好，请选择季度".format(user_name),
+            text="@{} 您好，請選擇季度項目".format(user_name),
             quick_reply=QuickReply(items=quick_reply_items)
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-
-@handler.add(MessageEvent, message=TextMessage)
-def handle_season_selection(event):
-    if event.message.text.startswith("2023") or event.message.text.startswith("2024"):
-        print("Season selected:", event.message.text)
+    elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
+        print("Season selected:", event.postback.data)
         # Here you can handle the selection of the season
         pass
+    else:
+        print("Other postback event received")
 
 @handler.add(MemberJoinedEvent)
 def welcome(event):
