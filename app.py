@@ -116,7 +116,7 @@ def handle_postback(event):
             text="請選擇季度",
             quick_reply=QuickReply(items=quick_reply_items)
         )
-        line_bot_api.reply_message(event.reply_token, reply_message)  # 回覆季節選項
+        line_bot_api.reply_message(event.reply_token, reply_message)  # 直接回覆季節選項
     elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
         print("Season selected:", event.postback.data)
         season = event.postback.data[4:]  # 獲取選擇的季節
