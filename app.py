@@ -111,7 +111,7 @@ def handle_postback(event):
             seasons = ["冬", "春", "夏", "秋"]
         else:
             seasons = ["冬", "春"]
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=year + season)) for season in seasons]
+        quick_reply_items = [QuickReplyButton(action=PostbackAction(label=season, data=year + season)) for season in seasons]
         reply_message = TextSendMessage(
             text="請選擇季度",
             quick_reply=QuickReply(items=quick_reply_items)
@@ -120,18 +120,14 @@ def handle_postback(event):
     elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
         print("Season selected:", event.postback.data)
         season = event.postback.data[4:]  # 獲取選擇的季節
-        reply_message = TextSendMessage(
-            text="@{} 您選擇了季度 {}".format(user_name, season),
-            quick_reply=QuickReply(
-                items=[
-                    QuickReplyButton(action=MessageAction(label="冬", text=season + "冬")),
-                    QuickReplyButton(action=MessageAction(label="春", text=season + "春")),
-                    QuickReplyButton(action=MessageAction(label="夏", text=season + "夏")),
-                    QuickReplyButton(action=MessageAction(label="秋", text=season + "秋"))
-                ]
-            )
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)  # 回覆季節選項
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請選擇季節", quick_reply=QuickReply(
+            items=[
+                QuickReplyButton(action=MessageAction(label="冬", text=season + "冬")),
+                QuickReplyButton(action=MessageAction(label="春", text=season + "春")),
+                QuickReplyButton(action=MessageAction(label="夏", text=season + "夏")),
+                QuickReplyButton(action=MessageAction(label="秋", text=season + "秋"))
+            ]
+        )))  # 直接回覆季節選項
     else:
         print("Other postback event received")
 
