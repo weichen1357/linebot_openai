@@ -108,15 +108,16 @@ def handle_postback(event):
         print("SEASON_SELECTION button clicked")
         # 這是一個新的 Postback 事件，詢問季度
         year = event.postback.data.split("_")[1]
-        if year == "2023":
-            seasons = ["冬", "春", "夏", "秋"]
-        else:
-            seasons = ["冬", "春"]
-
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=year + season)) for season in seasons]
         reply_message = TextSendMessage(
-            text="@{} 您好，請選擇季度項目".format(user_name),
-            quick_reply=QuickReply(items=quick_reply_items)
+            text="@{} 您好，您選擇了 {} 年，請選擇季度項目".format(user_name, year),
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="冬", text=year + "冬")),
+                    QuickReplyButton(action=MessageAction(label="春", text=year + "春")),
+                    QuickReplyButton(action=MessageAction(label="夏", text=year + "夏")),
+                    QuickReplyButton(action=MessageAction(label="秋", text=year + "秋")),
+                ]
+            )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
