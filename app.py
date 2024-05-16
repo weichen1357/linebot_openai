@@ -88,8 +88,7 @@ def handle_message(event):
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     else:
-        # Other messages received
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請使用有效指令，如「ACG展覽資訊」或「本季度新番」。"))
+        print("Other message received")
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
