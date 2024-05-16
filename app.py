@@ -78,7 +78,7 @@ def handle_message(event):
     elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，歡迎使用"本季度新番，請先選擇服務項目。".format(user_name),
+            text="@{} 您好，歡迎使用"本季度新番"功能，請先選擇服務項目。".format(user_name),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="2023", text="2023")),
