@@ -81,8 +81,8 @@ def handle_message(event):
             text="@{} 您好，請選擇年份".format(user_name),
             quick_reply=QuickReply(
                 items=[
-                    QuickReplyButton(action=PostbackAction(label="2023", data="2023")),
-                    QuickReplyButton(action=PostbackAction(label="2024", data="2024"))
+                    QuickReplyButton(action=PostbackAction(label="2023", data="SEASON_SELECTION_2023")),
+                    QuickReplyButton(action=PostbackAction(label="2024", data="SEASON_SELECTION_2024"))
                 ]
             )
         )
@@ -106,10 +106,10 @@ def handle_postback(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
     elif event.postback.data.startswith("SEASON_SELECTION"):
         print("SEASON_SELECTION button clicked")
-        # 這是一個新的 Postback 事件，詢問季度
-        year = event.postback.data.split("_")[1]
+        year = event.postback.data.split("_")[2]
+        # 詢問季度
         reply_message = TextSendMessage(
-            text="@{} 您好，請選擇季度項目".format(user_name, year),
+            text="@{} 您好，請選擇季度項目".format(user_name),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="冬", text=year + "冬")),
