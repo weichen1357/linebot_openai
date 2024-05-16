@@ -81,14 +81,15 @@ def handle_message(event):
             text="@{} 您好，請選擇年份".format(user_name),
             quick_reply=QuickReply(
                 items=[
-                    QuickReplyButton(action=PostbackAction(label="2023", text="2023")),
-                    QuickReplyButton(action=PostbackAction(label="2024", text="2024"))
+                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
+                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
                 ]
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     else:
-        print("Other message received")
+        # Other messages received
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請使用有效指令，如「ACG展覽資訊」或「本季度新番」。"))
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
