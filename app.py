@@ -75,7 +75,7 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-     elif event.message.text == "本季度新番":
+    elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
             text="@{} 您好，請選擇年份".format(user_name),
