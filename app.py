@@ -78,7 +78,7 @@ def handle_message(event):
     elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，歡迎使用「本季度新番」功能，請先選擇服務項目。".format(user_name),
+            text="@{} 您好，請選擇年份".format(user_name),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="2023", text="2023")),
@@ -94,7 +94,7 @@ def handle_message(event):
         else:
             seasons = ["冬", "春"]
 
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text= season)) for season in seasons]
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
         reply_message = TextSendMessage(
             text="@{} 您好，接著請選擇季度項目".format(user_name),
             quick_reply=QuickReply(items=quick_reply_items)
@@ -118,7 +118,7 @@ def handle_postback(event):
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
     elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
-        print("Season selected:", event.postback.data)
+        print("Season selected:", event.postback.data.split()[1])  # Extract the season from the data
         # Here you can handle the selection of the season
         pass
     else:
