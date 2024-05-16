@@ -104,25 +104,22 @@ def handle_postback(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
-    elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
+    elif event.postback.data == "2023" or event.postback.data == "2024":
         print("Year selected:", event.postback.data)
-        year = event.postback.data
-        # 询问季度
+        if event.postback.data == "2023":
+            seasons = ["冬", "春", "夏", "秋"]
+        else:
+            seasons = ["冬", "春"]
+
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=event.postback.data + season)) for season in seasons]
         reply_message = TextSendMessage(
-            text="@{} 您好，请选择季度".format(user_name),
-            quick_reply=QuickReply(
-                items=[
-                    QuickReplyButton(action=MessageAction(label="冬", text=f"{year}冬")),
-                    QuickReplyButton(action=MessageAction(label="春", text=f"{year}春")),
-                    QuickReplyButton(action=MessageAction(label="夏", text=f"{year}夏")),
-                    QuickReplyButton(action=MessageAction(label="秋", text=f"{year}秋")) if year == "2023" else None
-                ]
-            )
+            text="@{} 您好，請選擇季度項目".format(user_name),
+            quick_reply=QuickReply(items=quick_reply_items)
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.postback.data.startswith("2023冬") or event.postback.data.startswith("2023春") or event.postback.data.startswith("2023夏") or event.postback.data.startswith("2023秋") or event.postback.data.startswith("2024冬") or event.postback.data.startswith("2024春") or event.postback.data.startswith("2024夏"):
+    elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
         print("Season selected:", event.postback.data)
-        # 处理所选季度
+        # Here you can handle the selection of the season
         pass
     else:
         print("Other postback event received")
