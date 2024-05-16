@@ -81,8 +81,8 @@ def handle_message(event):
             text="@{} 您好，請選擇年份".format(user_name),
             quick_reply=QuickReply(
                 items=[
-                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
-                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
+                    QuickReplyButton(action=PostbackAction(label="2023", text="2023")),
+                    QuickReplyButton(action=PostbackAction(label="2024", text="2024"))
                 ]
             )
         )
