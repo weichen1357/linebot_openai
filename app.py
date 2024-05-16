@@ -59,12 +59,13 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    user_id = event.source.user_id
+    user_profile = line_bot_api.get_profile(event.source.user_id)
+    user_name = user_profile.display_name
     print("Received message:", event.message.text)
     if event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇你想了解的相關資訊吧！".format(user_id),
+            text="@{} 您好，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇你想了解的相關資訊吧！".format(user_name),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=PostbackAction(label="A：動漫", data="ANIME_EXHIBITION")),
@@ -77,7 +78,7 @@ def handle_message(event):
     elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，請選擇年份".format(user_id),
+            text="@{} 您好，請選擇年份".format(user_name),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=PostbackAction(label="2023", data="2023")),
@@ -91,7 +92,8 @@ def handle_message(event):
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
-    user_id = event.source.user_id
+    user_profile = line_bot_api.get_profile(event.source.user_id)
+    user_name = user_profile.display_name
     print("Received postback event:", event.postback.data)
     if event.postback.data == "ANIME_EXHIBITION":
         print("ANIME_EXHIBITION button clicked")
@@ -111,7 +113,7 @@ def handle_postback(event):
 
         quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=event.postback.data + season)) for season in seasons]
         reply_message = TextSendMessage(
-            text="@{} 您好，請選擇季度項目".format(user_id),
+            text="@{} 您好，請選擇季度項目".format(user_name),
             quick_reply=QuickReply(items=quick_reply_items)
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
