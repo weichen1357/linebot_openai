@@ -81,8 +81,8 @@ def handle_message(event):
             text="@{} 您好，請選擇年份".format(user_name),
             quick_reply=QuickReply(
                 items=[
-                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
-                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
+                    QuickReplyButton(action=PostbackAction(label="2023", data="SEASON_SELECTION_2023")),
+                    QuickReplyButton(action=PostbackAction(label="2024", data="SEASON_SELECTION_2024"))
                 ]
             )
         )
@@ -104,14 +104,16 @@ def handle_postback(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
-    elif event.postback.data == "2023" or event.postback.data == "2024":
-        print("Year selected:", event.postback.data)
-        if event.postback.data == "2023":
+    elif event.postback.data.startswith("SEASON_SELECTION"):
+        print("SEASON_SELECTION button clicked")
+        # 這是一個新的 Postback 事件，詢問季度
+        year = event.postback.data.split("_")[1]
+        if year == "2023":
             seasons = ["冬", "春", "夏", "秋"]
         else:
             seasons = ["冬", "春"]
 
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=event.postback.data + season)) for season in seasons]
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=year + season)) for season in seasons]
         reply_message = TextSendMessage(
             text="@{} 您好，請選擇季度項目".format(user_name),
             quick_reply=QuickReply(items=quick_reply_items)
@@ -122,9 +124,7 @@ def handle_postback(event):
         # Here you can handle the selection of the season
         pass
     else:
-        # 如果接收到的 postback data 不是上述提及的任何一種情況，就回應一則訊息告知使用者重新輸入有效指令
-        reply_message = TextSendMessage(text="請使用有效指令，如「ACG展覽」或「本季度新番」")
-        line_bot_api.reply_message(event.reply_token, reply_message)
+        print("Other postback event received")
 
 @handler.add(MemberJoinedEvent)
 def welcome(event):
