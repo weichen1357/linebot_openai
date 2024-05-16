@@ -78,7 +78,7 @@ def handle_message(event):
     elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，請選擇年份".format(user_name),
+            text="@{} 您好，请选择年份".format(user_name),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="2023", text="2023")),
@@ -94,43 +94,24 @@ def handle_message(event):
 def handle_year(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
-    print("Received message:", event.message.text)
-    if event.message.text == "2023" or event.message.text == "2024":
-        print("Year selected:", event.message.text)
-        if event.message.text == "2023":
-            seasons = ["冬", "春", "夏", "秋"]
-        else:
-            seasons = ["冬", "春"]
+    year = event.message.text
+    print("Received year:", year)
+    seasons = ["冬", "春", "夏", "秋"] if year == "2023" else ["冬", "春"]
+    quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=year + season)) for season in seasons]
+    reply_message = TextSendMessage(
+        text="@{} 您好，请选择季度".format(user_name),
+        quick_reply=QuickReply(items=quick_reply_items)
+    )
+    line_bot_api.reply_message(event.reply_token, reply_message)
 
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=event.message.text + season)) for season in seasons]
-        reply_message = TextSendMessage(
-            text="@{} 您好，請選擇季度項目".format(user_name),
-            quick_reply=QuickReply(items=quick_reply_items)
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
-    else:
-        print("Other message received")
-
-@handler.add(PostbackEvent)
-def handle_postback(event):
+@handler.add(MessageEvent, message=TextMessage)
+def handle_season(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
-    print("Received postback event:", event.postback.data)
-    if event.postback.data == "ANIME_EXHIBITION":
-        print("ANIME_EXHIBITION button clicked")
-        category = "A:動漫"
-        exhibition_data = crawl_exhibition_data(category)
-        if exhibition_data:
-            message = "\n".join(exhibition_data)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
-    elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
-        print("Season selected:", event.postback.data)
-        # Here you can handle the selection of the season
-        pass
-    else:
-        print("Other postback event received")
+    season = event.message.text
+    print("Received season:", season)
+    # 在此处添加处理用户选择季度的逻辑
+    pass
 
 @handler.add(MemberJoinedEvent)
 def welcome(event):
