@@ -94,7 +94,7 @@ def handle_message(event):
         else:
             seasons = ["冬", "春"]
 
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=event.message.text + season)) for season in seasons]
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text= season)) for season in seasons]
         reply_message = TextSendMessage(
             text="@{} 您好，接著請選擇季度項目".format(user_name),
             quick_reply=QuickReply(items=quick_reply_items)
