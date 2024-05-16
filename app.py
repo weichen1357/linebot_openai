@@ -6,6 +6,11 @@ from linebot.exceptions import (
     InvalidSignatureError
 )
 from linebot.models import *
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.common.by import By
+import time
 import os
 
 app = Flask(__name__)
@@ -13,11 +18,39 @@ static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
+# 设置 Chrome Driver 路径
+CHROME_DRIVER_PATH = "/path/to/chromedriver"
+
+# 创建 Chrome Webdriver
+def crawl_exhibition_data(category):
+    options = ChromeOptions()
+    options.add_argument('--headless')  # 使用 Chrome Headless 模式
+    service = ChromeService(executable_path=CHROME_DRIVER_PATH)
+    driver = webdriver.Chrome(service=service, options=options)
+    try:
+        driver.get("https://www.ccpa.org.tw/tica/data_more.php?pid=334574&tpl=")
+        time.sleep(3)
+
+        container_elements = driver.find_elements(By.CLASS_NAME, "container")
+        exhibition_data = []
+        for container_element in container_elements:
+            w_black_elements = container_element.find_elements(By.CLASS_NAME, "w_black")
+            for w_black_element in w_black_elements:
+                link_text = w_black_element.text
+                link_url = w_black_element.get_attribute("href")
+                exhibition_data.append(f"<a href='{link_url}'>{link_text}</a>")
+        return exhibition_data
+    except Exception as e:
+        print("發生錯誤:", str(e))
+        return []
+    finally:
+        driver.quit()  # 關閉瀏覽器
+
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
     body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+    app.logger.info("請求內容: " + body)
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
@@ -44,7 +77,7 @@ def handle_message(event):
     elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
-            text="請選擇年份",
+            text="@{} 您好，請選擇年份".format(user_id),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=PostbackAction(label="2023", data="2023")),
@@ -71,16 +104,15 @@ def handle_postback(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
     elif event.postback.data == "2023" or event.postback.data == "2024":
         print("Year selected:", event.postback.data)
+        if event.postback.data == "2023":
+            seasons = ["冬", "春", "夏", "秋"]
+        else:
+            seasons = ["冬", "春"]
+
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=event.postback.data + season)) for season in seasons]
         reply_message = TextSendMessage(
-            text="請選擇季度",
-            quick_reply=QuickReply(
-                items=[
-                    QuickReplyButton(action=PostbackAction(label="冬", data=event.postback.data + "冬")),
-                    QuickReplyButton(action=PostbackAction(label="春", data=event.postback.data + "春")),
-                    QuickReplyButton(action=PostbackAction(label="夏", data=event.postback.data + "夏")),
-                    QuickReplyButton(action=PostbackAction(label="秋", data=event.postback.data + "秋"))
-                ]
-            )
+            text="@{} 您好，請選擇季度項目".format(user_id),
+            quick_reply=QuickReply(items=quick_reply_items)
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
