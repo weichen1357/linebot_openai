@@ -81,8 +81,8 @@ def handle_message(event):
             text="@{} 您好，請選擇年份".format(user_name),
             quick_reply=QuickReply(
                 items=[
-                    QuickReplyButton(action=PostbackAction(label="2023", data="SEASON_SELECTION_2023")),
-                    QuickReplyButton(action=PostbackAction(label="2024", data="SEASON_SELECTION_2024"))
+                    QuickReplyButton(action=PostbackAction(label="2023", data="2023")),
+                    QuickReplyButton(action=PostbackAction(label="2024", data="2024"))
                 ]
             )
         )
@@ -109,7 +109,7 @@ def handle_postback(event):
         # 這是一個新的 Postback 事件，詢問季度
         year = event.postback.data.split("_")[1]
         reply_message = TextSendMessage(
-            text="@{} 您好，您選擇了 {} 年，請選擇季度項目".format(user_name, year),
+            text="@{} 您好，請選擇季度項目".format(user_name, year),
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="冬", text=year + "冬")),
