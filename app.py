@@ -107,15 +107,16 @@ def handle_postback(event):
     elif event.postback.data == "2023" or event.postback.data == "2024":
         print("Year selected:", event.postback.data)
         year = event.postback.data  # 獲取選擇的年份
-        quick_reply_items = [
-            QuickReplyButton(action=PostbackAction(label="冬", data=year + "冬")),
-            QuickReplyButton(action=PostbackAction(label="春", data=year + "春")),
-            QuickReplyButton(action=PostbackAction(label="夏", data=year + "夏")),
-            QuickReplyButton(action=PostbackAction(label="秋", data=year + "秋"))
-        ]
         reply_message = TextSendMessage(
             text="請選擇季度",
-            quick_reply=QuickReply(items=quick_reply_items)
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=PostbackAction(label="冬", data=year + "冬")),
+                    QuickReplyButton(action=PostbackAction(label="春", data=year + "春")),
+                    QuickReplyButton(action=PostbackAction(label="夏", data=year + "夏")),
+                    QuickReplyButton(action=PostbackAction(label="秋", data=year + "秋"))
+                ]
+            )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)  # 直接回覆季節選項
     elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
