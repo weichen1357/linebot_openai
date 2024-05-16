@@ -122,7 +122,9 @@ def handle_postback(event):
         # Here you can handle the selection of the season
         pass
     else:
-        print("Other postback event received")
+        # 如果接收到的 postback data 不是上述提及的任何一種情況，就回應一則訊息告知使用者重新輸入有效指令
+        reply_message = TextSendMessage(text="請使用有效指令，如「ACG展覽」或「本季度新番」")
+        line_bot_api.reply_message(event.reply_token, reply_message)
 
 @handler.add(MemberJoinedEvent)
 def welcome(event):
