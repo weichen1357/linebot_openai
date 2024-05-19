@@ -32,7 +32,7 @@ def parse_csv_data(csv_content):
         count = 0
         for row in csv_reader:
             name, popularity, date, url, img = row
-            message += f"{count + 1}. {name}\n  人氣: {popularity}\n  上架時間: {date}\n  以下是觀看連結: {url}\n"
+            message += f"{name}, {popularity}\n  上架時間: {date}\n  以下是觀看連結: {url}\n"
             count += 1
             if count >= 5:
                 break
