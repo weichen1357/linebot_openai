@@ -6,54 +6,22 @@ from linebot.exceptions import (
     InvalidSignatureError
 )
 from linebot.models import *
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.common.by import By
-import time
 import os
 
 app = Flask(__name__)
-static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
-# 设置 Chrome Driver 路径
-CHROME_DRIVER_PATH = "/path/to/chromedriver"
-
-# 创建 Chrome Webdriver
-def crawl_exhibition_data(category):
-    options = ChromeOptions()
-    options.add_argument('--headless')  # 使用 Chrome Headless 模式
-    service = ChromeService(executable_path=CHROME_DRIVER_PATH)
-    driver = webdriver.Chrome(service=service, options=options)
-    try:
-        driver.get("https://www.ccpa.org.tw/tica/data_more.php?pid=334574&tpl=")
-        time.sleep(3)
-
-        container_elements = driver.find_elements(By.CLASS_NAME, "container")
-        exhibition_data = []
-        for container_element in container_elements:
-            w_black_elements = container_element.find_elements(By.CLASS_NAME, "w_black")
-            for w_black_element in w_black_elements:
-                link_text = w_black_element.text
-                link_url = w_black_element.get_attribute("href")
-                exhibition_data.append(f"<a href='{link_url}'>{link_text}</a>")
-        return exhibition_data
-    except Exception as e:
-        print("發生錯誤:", str(e))
-        return []
-    finally:
-        driver.quit()  # 關閉瀏覽器
-
 @app.route("/callback", methods=['POST'])
 def callback():
-    signature = request.headers['X-Line-Signature']
+    signature = request.headers.get('X-Line-Signature')
     body = request.get_data(as_text=True)
-    app.logger.info("請求內容: " + body)
+    app.logger.info("Signature: " + signature)
+    app.logger.info("Request body: " + body)
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
+        app.logger.error("Invalid signature. Check your channel access token/channel secret.")
         abort(400)
     return 'OK'
 
@@ -61,16 +29,17 @@ def callback():
 def handle_message(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
-    print("Received message:", event.message.text)
+    print(f"Received message from {user_name}: {event.message.text}")
+
     if event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇你想了解的相關資訊吧！".format(user_name),
+            text=f"@{user_name} 您好，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇你想了解的相關資訊吧！",
             quick_reply=QuickReply(
                 items=[
-                    QuickReplyButton(action=PostbackAction(label="A：動漫", data="ANIME_EXHIBITION")),
-                    QuickReplyButton(action=PostbackAction(label="C：漫畫", data="COMIC_EXHIBITION")),
-                    QuickReplyButton(action=PostbackAction(label="G：電玩", data="GAME_EXHIBITION"))
+                    QuickReplyButton(action=MessageAction(label="A：動漫", text="A：動漫")),
+                    QuickReplyButton(action=MessageAction(label="C：漫畫", text="C：漫畫")),
+                    QuickReplyButton(action=MessageAction(label="G：電玩", text="G：電玩"))
                 ]
             )
         )
@@ -78,7 +47,7 @@ def handle_message(event):
     elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，請選擇年份".format(user_name),
+            text=f"@{user_name} 您好，請選擇年份",
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="2023", text="2023")),
@@ -87,8 +56,8 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "2023" or event.message.text == "2024":
-        print("Year selected:", event.message.text)
+    elif event.message.text in ["2023", "2024"]:
+        print(f"Year selected: {event.message.text}")
         if event.message.text == "2023":
             seasons = ["冬", "春", "夏", "秋"]
         else:
@@ -96,14 +65,14 @@ def handle_message(event):
 
         quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
         reply_message = TextSendMessage(
-            text="@{} 您好，接著請選擇季度項目".format(user_name),
+            text=f"@{user_name} 您好，接著請選擇季度項目",
             quick_reply=QuickReply(items=quick_reply_items)
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
         reply_message = TextSendMessage(
-            text="@{} 您好，想觀看甚麼類型的動漫呢?請選擇想觀看的類型吧!".format(user_name),
+            text=f"@{user_name} 您好，想觀看甚麼類型的動漫呢?請選擇想觀看的類型吧!",
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="王道", text="王道")),
@@ -117,29 +86,17 @@ def handle_message(event):
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     else:
-        print("Other message received")
-        # 可以添加對其它消息的處理邏輯
+        print("Other message received: " + event.message.text)
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
-    print("Received postback event:", event.postback.data)
-    if event.postback.data == "ANIME_EXHIBITION":
-        print("ANIME_EXHIBITION button clicked")
-        category = "A:動漫"
-        exhibition_data = crawl_exhibition_data(category)
-        if exhibition_data:
-            message = "\n".join(exhibition_data)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，沒有找到相關展覽資料。"))
-    elif event.postback.data.startswith("2023") or event.postback.data.startswith("2024"):
-        print("Season selected:", event.postback.data.split()[1])  # Extract the season from the data
-        # Here you can handle the selection of the season
-        pass
-    else:
-        print("Other postback event received")
+    print(f"Received postback event from {user_name}: {event.postback.data}")
+
+    # Directly reply with the data from the PostbackAction
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
 @handler.add(MemberJoinedEvent)
 def welcome(event):
