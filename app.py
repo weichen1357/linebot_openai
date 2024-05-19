@@ -133,10 +133,6 @@ def handle_postback(event):
 @handler.add(MemberJoinedEvent)
 def welcome(event):
     gid = event.source.group_id
-    profile = line_bot_api.get_group_member_profile(gid
-@handler.add(MemberJoinedEvent)
-def welcome(event):
-    gid = event.source.group_id
     profile = line_bot_api.get_group_member_profile(gid, event.joined.members[0].user_id)
     name = profile.display_name
     message = TextSendMessage(text=f'{name} 歡迎加入')
