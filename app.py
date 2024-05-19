@@ -28,7 +28,7 @@ def parse_csv_data(csv_content):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
         message = ""
-        count = 1
+        count = 0
         for row in csv_reader:
             if count >= 5:
                 break
