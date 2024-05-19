@@ -27,9 +27,13 @@ def fetch_csv_data(url):
 def parse_csv_data(csv_content):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
-        message = "王道番剧列表：\n"
+        message = "王道番劇列表：\n"
+        count = 0
         for row in csv_reader:
-            message += "- " + ", ".join(row) + "\n"
+            if count >= 5:
+                break
+            message += f"- {row[0]}\n"
+            count += 1
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
