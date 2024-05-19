@@ -7,10 +7,28 @@ from linebot.exceptions import (
 )
 from linebot.models import *
 import os
+import csv
+import random
+import requests
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
+
+# 在 Flask 應用程式之外讀取 CSV 檔案，並解析數據
+anime_data = []
+
+# 讀取 CSV 檔案
+csv_url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/王道番整合數據.csv"
+response = requests.get(csv_url)
+
+if response.status_code == 200:
+    lines = response.text.split("\n")
+    reader = csv.DictReader(lines)
+    for row in reader:
+        anime_data.append(row)
+else:
+    print("Failed to fetch CSV file")
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -44,6 +62,23 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "王道":
+        # 從動漫數據中隨機選取五條記錄
+        random_anime = random.sample(anime_data, 5)
+
+        # 構建回覆訊息
+        reply_message = "以下是王道動漫的資訊：\n"
+        for index, value in enumerate(random_anime):
+            reply_message += (
+                f'{index + 1}. 『{value["name"]}』\n'
+                f'人氣：{value["popularity"]}\n'
+                f'上架時間：{value["date"]}\n'
+                f'以下是觀看連結：\n'
+                f'{value["url"]}\n\n'
+            )
+
+        # 回覆訊息給使用者
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
     elif event.message.text == "本季度新番":
         print("本季度新番 button clicked")
         reply_message = TextSendMessage(
@@ -102,10 +137,10 @@ def handle_postback(event):
 def welcome(event):
     gid = event.source.group_id
     profile = line_bot_api.get_group_member_profile(gid, event.joined.members[0].user_id)
-    name = profile.display_name
-    message = TextSendMessage(text=f'{name} 歡迎加入')
-    line_bot_api.push_message(gid, message)
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=f"Welcome {profile.display_name}!")
+    )
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run()
