@@ -47,6 +47,7 @@ def callback():
     return 'OK'
 
 @handler.add(MessageEvent, message=TextMessage)
+@handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
