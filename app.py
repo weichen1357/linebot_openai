@@ -26,21 +26,18 @@ def fetch_csv_data(url):
 
 def parse_csv_data(csv_content):
     try:
-        csv_reader = csv.DictReader(csv_content.splitlines())
-        message = "王道番劇列表：\n"
+        csv_reader = csv.reader(csv_content.splitlines())
+        message = ""
         count = 0
         for row in csv_reader:
             if count >= 5:
                 break
-            # 假设CSV的列为: name, popularity, date, url
-            name = row['name']
-            popularity = row['popularity']
-            date = row['date']
-            url = row['url']
-            message += f"{count + 1}. {name}\n"
-            message += f"人氣: {popularity}\n"
-            message += f"上架時間: {date}\n"
-            message += f"以下是觀看連結: {url}\n\n"
+            name = row[1]
+            popularity = row[0]
+            date = row[2]
+            url = row[3]
+            # 构建消息
+            message += f"{count+1}. 名称：{name}\n   人气：{popularity}\n   上架时间：{date}\n   观看链接：{url}\n"
             count += 1
         return message
     except csv.Error as e:
@@ -65,8 +62,16 @@ def handle_message(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received message from {user_name}: {event.message.text}")
-
-    if event.message.text == "ACG展覽資訊":
+    if event.message.text == "王道":
+        print("王道 button clicked")
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message = parse_csv_data(csv_data)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取王道番剧列表。"))
+    elif event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
             text=f"@{user_name} 您好，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇你想了解的相關資訊吧！",
@@ -119,25 +124,15 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "王道":
-        print("王道 button clicked")
-        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
-        csv_data = fetch_csv_data(url)
-        if csv_data:
-            message = parse_csv_data(csv_data)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取王道番剧列表。"))
     else:
         print("Other message received: " + event.message.text)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received postback event from {user_name}: {event.postback.data}")
-
     # Directly reply with the data from the PostbackAction
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
@@ -152,3 +147,4 @@ def welcome(event):
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
