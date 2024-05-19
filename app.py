@@ -14,7 +14,8 @@ line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 # 读取 CSV 文件
-df = pd.read_csv("https://github.com/weichen1357/linebot_openai/blob/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv")
+# 注意：这里需要使用原始的 GitHub 链接，而不是文件在 GitHub 网站上的链接
+df = pd.read_csv("https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv")
 
 # 根据类别过滤动漫数据
 def filter_anime_by_category(category, df):
@@ -24,7 +25,7 @@ def filter_anime_by_category(category, df):
 # 生成动漫信息回复消息
 def Category(result, msg): 
     reply_1 = f'這裡依照近期人氣為您推薦5部｢{msg}｣類別動漫：\n\n' 
-    for index,value in enumerate(result): 
+    for index, value in result.iterrows(): 
         reply = (f'{index + 1}. 『{value["name"]}』\n' 
                 f'人氣：{value["popularity"]}\n' 
                 f'上架時間：{value["date"]}\n' 
@@ -81,6 +82,13 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "王道":
+        print("王道 button clicked")
+        # 筛选王道类别的动漫
+        wangdao_anime = filter_anime_by_category("王道", df)
+        # 获取王道类别动漫的推荐消息
+        reply = Category(wangdao_anime.head(5), "王道")
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
