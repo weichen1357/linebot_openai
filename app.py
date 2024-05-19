@@ -32,7 +32,7 @@ def parse_csv_data(csv_content):
         count = 0
         for row in csv_reader:
             name, popularity, date, url, img = row
-            message += f"{name}, {popularity}\n  上架時間: {date}\n  以下是觀看連結: {url}\n"
+            message += f"{count + 1}. {name}\n  人气：{popularity}\n  上架时间：{date}\n  观看链接：{url}\n\n"
             count += 1
             if count >= 5:
                 break
@@ -67,26 +67,32 @@ def handle_message(event):
             message = parse_csv_data(csv_data)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取王道番剧列表。"))
-    elif event.message.text == "愛看啥類別":
-        print("愛看啥類別 button clicked")
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取王道番剧列表。"))
+    elif event.message.text == "本季度新番":
+        print("本季度新番 button clicked")
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E6%9C%AC%E5%AD%A3%E5%BA%A6%E6%96%B0%E7%95%AA.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message = parse_csv_data(csv_data)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取本季度新番列表。"))
+    elif event.message.text == "ACG展覽":
+        print("ACG展覽 button clicked")
         reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，想觀看甚麼類型的動漫呢?請選擇想觀看的類型吧!",
+            text=f"@{user_name} 您好，想了解ACG（A：动漫、C：漫画、G：电玩）的展览信息吗？请选取您想了解的相关信息吧！",
             quick_reply=QuickReply(
                 items=[
-                    QuickReplyButton(action=MessageAction(label="王道", text="王道")),
-                    QuickReplyButton(action=MessageAction(label="校園", text="校園")),
-                    QuickReplyButton(action=MessageAction(label="戀愛", text="戀愛")),
-                    QuickReplyButton(action=MessageAction(label="運動", text="運動")),
-                    QuickReplyButton(action=MessageAction(label="喜劇", text="喜劇")),
-                    QuickReplyButton(action=MessageAction(label="異世界", text="異世界"))
+                    QuickReplyButton(action=MessageAction(label="A：动漫", text="A：动漫")),
+                    QuickReplyButton(action=MessageAction(label="C：漫画", text="C：漫画")),
+                    QuickReplyButton(action=MessageAction(label="G：电玩", text="G：电玩"))
                 ]
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     else:
         print("Other message received: " + event.message.text)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
@@ -101,7 +107,7 @@ def welcome(event):
     gid = event.source.group_id
     profile = line_bot_api.get_group_member_profile(gid, event.joined.members[0].user_id)
     name = profile.display_name
-    message = TextSendMessage(text=f'{name} 歡迎加入')
+    message = TextSendMessage(text=f'{name} 欢迎加入')
     line_bot_api.push_message(gid, message)
 
 if __name__ == "__main__":
