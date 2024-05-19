@@ -26,16 +26,21 @@ def fetch_csv_data(url):
 
 def parse_csv_data(csv_content):
     try:
-        csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)  # 跳过表头
+        csv_reader = csv.DictReader(csv_content.splitlines())
         message = "王道番劇列表：\n"
         count = 0
         for row in csv_reader:
             if count >= 5:
                 break
-            # 假设CSV的列顺序为：名称, 人气, 上架时间, 观看链接
-            name, popularity, release_date, link = row
-            message += f"名稱: {name}\n人氣: {popularity}\n上架時間: {release_date}\n觀看連結: {link}\n\n"
+            # 假设CSV的列为: name, popularity, date, url
+            name = row['name']
+            popularity = row['popularity']
+            date = row['date']
+            url = row['url']
+            message += f"{count + 1}. {name}\n"
+            message += f"人氣: {popularity}\n"
+            message += f"上架時間: {date}\n"
+            message += f"以下是觀看連結: {url}\n\n"
             count += 1
         return message
     except csv.Error as e:
@@ -92,7 +97,6 @@ def handle_message(event):
             seasons = ["冬", "春", "夏", "秋"]
         else:
             seasons = ["冬", "春"]
-
         quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
         reply_message = TextSendMessage(
             text=f"@{user_name} 您好，接著請選擇季度項目",
