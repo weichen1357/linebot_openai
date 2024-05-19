@@ -87,7 +87,7 @@ def handle_message(event):
             ]
         )
     )
-    line_bot_api.reply_message(event.reply_token, reply_message)
+        line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "校園":
         print("校園 button clicked")
         url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E6%A0%A1%E5%9C%92%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
