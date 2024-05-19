@@ -27,18 +27,15 @@ def fetch_csv_data(url):
 def parse_csv_data(csv_content):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
+        next(csv_reader)  # 跳过标题行
         message = ""
         count = 0
         for row in csv_reader:
+            name, popularity, date, url, img = row
+            message += f"{count + 1}. {name}\n  人氣: {popularity}\n  上架時間: {date}\n  以下是觀看連結: {url}\n"
+            count += 1
             if count >= 5:
                 break
-            name = row[1]
-            popularity = row[0]
-            date = row[2]
-            url = row[3]
-            # 构建消息
-            message += f"{count+1}. 名称：{name}\n   人气：{popularity}\n   上架时间：{date}\n   观看链接：{url}\n"
-            count += 1
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -70,63 +67,10 @@ def handle_message(event):
             message = parse_csv_data(csv_data)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取王道番剧列表。"))
-    elif event.message.text == "ACG展覽資訊":
-        print("ACG展覽資訊 button clicked")
-        reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇你想了解的相關資訊吧！",
-            quick_reply=QuickReply(
-                items=[
-                    QuickReplyButton(action=MessageAction(label="A：動漫", text="A：動漫")),
-                    QuickReplyButton(action=MessageAction(label="C：漫畫", text="C：漫畫")),
-                    QuickReplyButton(action=MessageAction(label="G：電玩", text="G：電玩"))
-                ]
-            )
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "本季度新番":
-        print("本季度新番 button clicked")
-        reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，請選擇年份",
-            quick_reply=QuickReply(
-                items=[
-                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
-                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
-                ]
-            )
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text in ["2023", "2024"]:
-        print(f"Year selected: {event.message.text}")
-        if event.message.text == "2023":
-            seasons = ["冬", "春", "夏", "秋"]
-        else:
-            seasons = ["冬", "春"]
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
-        reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，接著請選擇季度項目",
-            quick_reply=QuickReply(items=quick_reply_items)
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "愛看啥類別":
-        print("愛看啥類別 button clicked")
-        reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，想觀看甚麼類型的動漫呢?請選擇想觀看的類型吧!",
-            quick_reply=QuickReply(
-                items=[
-                    QuickReplyButton(action=MessageAction(label="王道", text="王道")),
-                    QuickReplyButton(action=MessageAction(label="校園", text="校園")),
-                    QuickReplyButton(action=MessageAction(label="戀愛", text="戀愛")),
-                    QuickReplyButton(action=MessageAction(label="運動", text="運動")),
-                    QuickReplyButton(action=MessageAction(label="喜劇", text="喜劇")),
-                    QuickReplyButton(action=MessageAction(label="異世界", text="異世界"))
-                ]
-            )
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取王道番剧列表。"))
     else:
         print("Other message received: " + event.message.text)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
@@ -147,4 +91,3 @@ def welcome(event):
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-
