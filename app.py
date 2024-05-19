@@ -10,10 +10,6 @@ import os
 import requests
 import csv
 
-app = Flask(__name__)
-line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
-handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
-
 def scrape_data():
     csv_url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/王道番整合數據.csv"
     response = requests.get(csv_url)
@@ -30,7 +26,7 @@ def scrape_data():
             anime_data.append(row)
     else:
         print("Failed to fetch CSV file")
-    print(anime_data)
+
     return anime_data
 
 @app.route("/callback", methods=['POST'])
@@ -45,8 +41,7 @@ def callback():
         app.logger.error("Invalid signature. Check your channel access token/channel secret.")
         abort(400)
     return 'OK'
-
-@handler.add(MessageEvent, message=TextMessage)
+    
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
