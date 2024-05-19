@@ -72,23 +72,32 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "愛看啥類別":
-    print("愛看啥類別 button clicked")
-    reply_message = TextSendMessage(
-        text=f"@{user_name} 您好，想觀看什麼類型的動漫呢？請選取您想觀看的類型吧！",
-        quick_reply=QuickReply(
-            items=[
-                QuickReplyButton(action=MessageAction(label="王道", text="王道")),
-                QuickReplyButton(action=MessageAction(label="校園", text="校園")),
-                QuickReplyButton(action=MessageAction(label="戀愛", text="戀愛")),
-                QuickReplyButton(action=MessageAction(label="運動", text="運動")),
-                QuickReplyButton(action=MessageAction(label="喜劇", text="喜劇")),
-                QuickReplyButton(action=MessageAction(label="異世界", text="異世界"))
-            ]
+     elif event.message.text == "愛看啥類別":
+        print("愛看啥類別 button clicked")
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，想观看什么类型的动漫呢？请选取您想观看的类型吧！",
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="王道", text="王道")),
+                    QuickReplyButton(action=MessageAction(label="校園", text="校園")),
+                    QuickReplyButton(action=MessageAction(label="戀愛", text="戀愛")),
+                    QuickReplyButton(action=MessageAction(label="運動", text="運動")),
+                    QuickReplyButton(action=MessageAction(label="喜劇", text="喜劇")),
+                    QuickReplyButton(action=MessageAction(label="異世界", text="異世界"))
+                ]
+            )
         )
-    )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "校園":
+     elif event.message.text == "王道":
+        print("王道 button clicked")
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message = parse_csv_data(csv_data)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取王道番剧列表。"))
+     elif event.message.text == "校園":
         print("校園 button clicked")
         url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E6%A0%A1%E5%9C%92%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
         csv_data = fetch_csv_data(url)
