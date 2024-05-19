@@ -5,3 +5,4 @@ gunicorn
 bs4
 selenium
 by
+pandas
