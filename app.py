@@ -7,12 +7,40 @@ from linebot.exceptions import (
 )
 from linebot.models import *
 import os
-import pandas as pd
 import requests
+import csv
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
+
+def fetch_csv_data(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # 检查是否有错误发生
+        csv_data = response.text
+        return csv_data
+    except requests.exceptions.RequestException as e:
+        print("Error fetching CSV data:", e)
+        return None
+
+def parse_csv_data(csv_content):
+    try:
+        csv_reader = csv.reader(csv_content.splitlines())
+        message = "王道番劇列表：\n"
+        count = 0
+        next(csv_reader)  # 跳过表头
+        for row in csv_reader:
+            if count >= 5:
+                break
+            # 假设CSV的列顺序为：名称，人气，观看连结
+            name, popularity, link = row
+            message += f"名稱: {name}\n人氣: {popularity}\n觀看連結: {link}\n\n"
+            count += 1
+        return message
+    except csv.Error as e:
+        print("Error parsing CSV:", e)
+        return None
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -89,18 +117,13 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "王道":
         print("王道 button clicked")
-        # Fetch and parse the CSV file
-        csv_url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
-        df = pd.read_csv(csv_url)
-        df = df.head(5)  # Get the top 5 rows
-
-        # Create a message with the top 5 anime information
-        messages = []
-        for index, row in df.iterrows():
-            messages.append(f"名稱: {row['名稱']}\n人氣: {row['人氣']}\n觀看連結: {row['觀看連結']}")
-
-        reply_message = TextSendMessage(text="\n\n".join(messages))
-        line_bot_api.reply_message(event.reply_token, reply_message)
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message = parse_csv_data(csv_data)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取王道番剧列表。"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
