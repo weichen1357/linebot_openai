@@ -27,9 +27,9 @@ def fetch_csv_data(url):
 def parse_csv_data(csv_content):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
+        next(csv_reader)  # 跳过表头
         message = "王道番劇列表：\n"
         count = 0
-        next(csv_reader)  # 跳过表头
         for row in csv_reader:
             if count >= 5:
                 break
