@@ -34,7 +34,7 @@ def read_csv_from_url(url):
 def format_reply(result, category):
     reply_1 = f'這裡依照近期人氣為您推薦5部「{category}」類別動漫：\n\n'
     for index, value in enumerate(result[:5]):
-        reply = (f'{index + 1}.『{value["name"]}』\n'
+        reply = (f'{index + 1}. 『{value["name"]}』\n'
                  f'人氣：{value["popularity"]}\n'
                  f'上架時間：{value["date"]}\n'
                  f'以下是觀看連結：\n'
