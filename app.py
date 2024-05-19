@@ -9,6 +9,7 @@ from linebot.models import *
 import os
 import requests
 import csv
+import random
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
@@ -28,14 +29,13 @@ def parse_csv_data(csv_content):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
         next(csv_reader)  # 跳过标题行
+        rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
+        # 隨機挑選五個
+        sampled_rows = random.sample(rows, min(5, len(rows)))
         message = ""
-        count = 0
-        for row in csv_reader:
+        for count, row in enumerate(sampled_rows):
             name, popularity, date, url, img = row
             message += f"{count + 1}.『{popularity}』\n  人氣: {name}\n  上架时间: {date}\n  以下是觀看連結: {url}\n\n"
-            count += 1
-            if count >= 5:
-                break
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -72,100 +72,51 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "本季度新番":
-        print("本季度新番 button clicked")
-        reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，请选择年份",
-            quick_reply=QuickReply(
-                items=[
-                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
-                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
-                ]
-            )
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text in ["2023", "2024"]:
-        print(f"Year selected: {event.message.text}")
-        if event.message.text == "2023":
-            seasons = ["冬", "春", "夏", "秋"]
-        else:
-            seasons = ["冬", "春"]
-        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
-        reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，请选择季度项目",
-            quick_reply=QuickReply(items=quick_reply_items)
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "愛看啥類別":
-        print("愛看啥類別 button clicked")
-        reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，想观看什么类型的动漫呢？请选取您想观看的类型吧！",
-            quick_reply=QuickReply(
-                items=[
-                    QuickReplyButton(action=MessageAction(label="王道", text="王道")),
-                    QuickReplyButton(action=MessageAction(label="校園", text="校園")),
-                    QuickReplyButton(action=MessageAction(label="戀愛", text="戀愛")),
-                    QuickReplyButton(action=MessageAction(label="運動", text="運動")),
-                    QuickReplyButton(action=MessageAction(label="喜劇", text="喜劇")),
-                    QuickReplyButton(action=MessageAction(label="異世界", text="異世界"))
-                ]
-            )
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "王道":
-        print("王道 button clicked")
-        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
-        csv_data = fetch_csv_data(url)
-        if csv_data:
-            message = parse_csv_data(csv_data)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取王道番剧列表。"))
     elif event.message.text == "校園":
         print("校園 button clicked")
-        url = "https://github.com/weichen1357/linebot_openai/blob/master/%E6%A0%A1%E5%9C%92%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E6%A0%A1%E5%9C%92%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
             message = parse_csv_data(csv_data)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取校園番剧列表。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取校園番劇列表。"))
     elif event.message.text == "戀愛":
         print("戀愛 button clicked")
-        url = "https://github.com/weichen1357/linebot_openai/blob/master/%E6%88%80%E6%84%9B%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E6%88%80%E6%84%9B%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
             message = parse_csv_data(csv_data)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取戀愛番剧列表。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取戀愛番劇列表。"))
     elif event.message.text == "運動":
-        print("運鄧 button clicked")
-        url = "https://github.com/weichen1357/linebot_openai/blob/master/%E9%81%8B%E5%8B%95%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        print("運動 button clicked")
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E9%81%8B%E5%8B%95%E7%95%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
             message = parse_csv_data(csv_data)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取運動番剧列表。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取運動番劇列表。"))
     elif event.message.text == "喜劇":
         print("喜劇 button clicked")
-        url = "https://github.com/weichen1357/linebot_openai/blob/master/%E5%96%9C%E5%8A%87%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E5%96%9C%E5%8A%87%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
             message = parse_csv_data(csv_data)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取喜劇番剧列表。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取喜劇番劇列表。"))
     elif event.message.text == "異世界":
         print("異世界 button clicked")
-        url = "https://github.com/weichen1357/linebot_openai/blob/master/%E7%95%B0%E4%B8%96%E7%95%8C%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%95%B0%E4%B8%96%E7%95%8C%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
             message = parse_csv_data(csv_data)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取異世界番剧列表。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取異世界番劇列表。"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
