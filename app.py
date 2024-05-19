@@ -25,6 +25,10 @@ response = requests.get(csv_url)
 if response.status_code == 200:
     lines = response.text.split("\n")
     reader = csv.DictReader(lines)
+    
+    # 跳過 CSV 文件的標題行
+    next(reader)
+    
     for row in reader:
         anime_data.append(row)
 else:
@@ -133,14 +137,23 @@ def handle_postback(event):
     # Directly reply with the data from the PostbackAction
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    user_profile = line_bot_api.get_profile(event.source.user_id)
+    user_name = user_profile.display_name
+    print(f"Received postback event from {user_name}: {event.postback.data}")
+
+    # Directly reply with the data from the PostbackAction
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
+
 @handler.add(MemberJoinedEvent)
 def welcome(event):
     gid = event.source.group_id
     profile = line_bot_api.get_group_member_profile(gid, event.joined.members[0].user_id)
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=f"Welcome {profile.display_name}!")
-    )
+    name = profile.display_name
+    message = TextSendMessage(text=f'{name} 歡迎加入')
+    line_bot_api.push_message(gid, message)
 
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
