@@ -72,6 +72,22 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "愛看啥類別":
+    print("愛看啥類別 button clicked")
+    reply_message = TextSendMessage(
+        text=f"@{user_name} 您好，想觀看什麼類型的動漫呢？請選取您想觀看的類型吧！",
+        quick_reply=QuickReply(
+            items=[
+                QuickReplyButton(action=MessageAction(label="王道", text="王道")),
+                QuickReplyButton(action=MessageAction(label="校園", text="校園")),
+                QuickReplyButton(action=MessageAction(label="戀愛", text="戀愛")),
+                QuickReplyButton(action=MessageAction(label="運動", text="運動")),
+                QuickReplyButton(action=MessageAction(label="喜劇", text="喜劇")),
+                QuickReplyButton(action=MessageAction(label="異世界", text="異世界"))
+            ]
+        )
+    )
+    line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "校園":
         print("校園 button clicked")
         url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E6%A0%A1%E5%9C%92%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
