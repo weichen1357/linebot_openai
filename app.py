@@ -32,7 +32,7 @@ def parse_csv_data(csv_content):
         count = 0
         for row in csv_reader:
             name, popularity, date, url, img = row
-            message += f"{count + 1}. {name}\n  人气：{popularity}\n  上架时间：{date}\n  观看链接：{url}\n\n"
+            message += f"{count + 1}.『{name}』\n  人气: {popularity}\n  上架时间: {date}\n  以下是观看链接: {url}\n\n"
             count += 1
             if count >= 5:
                 break
@@ -59,28 +59,10 @@ def handle_message(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received message from {user_name}: {event.message.text}")
-    if event.message.text == "王道":
-        print("王道 button clicked")
-        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
-        csv_data = fetch_csv_data(url)
-        if csv_data:
-            message = parse_csv_data(csv_data)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取王道番剧列表。"))
-    elif event.message.text == "本季度新番":
-        print("本季度新番 button clicked")
-        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E6%9C%AC%E5%AD%A3%E5%BA%A6%E6%96%B0%E7%95%AA.csv"
-        csv_data = fetch_csv_data(url)
-        if csv_data:
-            message = parse_csv_data(csv_data)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取本季度新番列表。"))
-    elif event.message.text == "ACG展覽":
-        print("ACG展覽 button clicked")
+    if event.message.text == "ACG展覽資訊":
+        print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，想了解ACG（A：动漫、C：漫画、G：电玩）的展览信息吗？请选取您想了解的相关信息吧！",
+            text=f"@{user_name} 您好，想了解ACG（A：动漫、C：漫画、G：电玩）的展览资讯吗？请选择您想了解的相关资讯吧！",
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="A：动漫", text="A：动漫")),
@@ -90,6 +72,55 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "本季度新番":
+        print("本季度新番 button clicked")
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，请选择年份",
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
+                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text in ["2023", "2024"]:
+        print(f"Year selected: {event.message.text}")
+        if event.message.text == "2023":
+            seasons = ["冬", "春", "夏", "秋"]
+        else:
+            seasons = ["冬", "春"]
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，请选择季度项目",
+            quick_reply=QuickReply(items=quick_reply_items)
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "愛看啥類別":
+        print("愛看啥類別 button clicked")
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，想观看什么类型的动漫呢？请选取您想观看的类型吧！",
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="王道", text="王道")),
+                    QuickReplyButton(action=MessageAction(label="校园", text="校园")),
+                    QuickReplyButton(action=MessageAction(label="恋爱", text="恋爱")),
+                    QuickReplyButton(action=MessageAction(label="运动", text="运动")),
+                    QuickReplyButton(action=MessageAction(label="喜剧", text="喜剧")),
+                    QuickReplyButton(action=MessageAction(label="异世界", text="异世界"))
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "王道":
+        print("王道 button clicked")
+        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message = parse_csv_data(csv_data)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取王道番剧列表。"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
