@@ -30,7 +30,7 @@ def scrape_data():
             anime_data.append(row)
     else:
         print("Failed to fetch CSV file")
-
+    print(anime_data)
     return anime_data
 
 @app.route("/callback", methods=['POST'])
