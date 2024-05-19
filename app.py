@@ -9,11 +9,9 @@ from linebot.models import *
 import os
 import requests
 import csv
-
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
-
 def fetch_csv_data(url):
     try:
         response = requests.get(url)
@@ -23,25 +21,22 @@ def fetch_csv_data(url):
     except requests.exceptions.RequestException as e:
         print("Error fetching CSV data:", e)
         return None
-
 def parse_csv_data(csv_content):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
+        message = "王道番剧列表：\n"
         message = "王道番劇列表：\n"
         count = 0
-        next(csv_reader)  # 跳过表头
         for row in csv_reader:
+            message += "- " + ", ".join(row) + "\n"
             if count >= 5:
                 break
-            # 假设CSV的列顺序为：名称，人气，观看连结
-            name, popularity, link = row
-            message += f"名稱: {name}\n人氣: {popularity}\n觀看連結: {link}\n\n"
+            message += f"- {row[0]}\n"
             count += 1
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None
-
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers.get('X-Line-Signature')
@@ -54,13 +49,11 @@ def callback():
         app.logger.error("Invalid signature. Check your channel access token/channel secret.")
         abort(400)
     return 'OK'
-
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received message from {user_name}: {event.message.text}")
-
     if event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
@@ -92,7 +85,6 @@ def handle_message(event):
             seasons = ["冬", "春", "夏", "秋"]
         else:
             seasons = ["冬", "春"]
-
         quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
         reply_message = TextSendMessage(
             text=f"@{user_name} 您好，接著請選擇季度項目",
@@ -127,16 +119,13 @@ def handle_message(event):
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
-
 @handler.add(PostbackEvent)
 def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received postback event from {user_name}: {event.postback.data}")
-
     # Directly reply with the data from the PostbackAction
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
-
 @handler.add(MemberJoinedEvent)
 def welcome(event):
     gid = event.source.group_id
@@ -144,7 +133,6 @@ def welcome(event):
     name = profile.display_name
     message = TextSendMessage(text=f'{name} 歡迎加入')
     line_bot_api.push_message(gid, message)
-
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
