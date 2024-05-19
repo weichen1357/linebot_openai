@@ -68,6 +68,22 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取王道番剧列表。"))
+    elif event.message.text == "愛看啥類別":
+        print("愛看啥類別 button clicked")
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，想觀看甚麼類型的動漫呢?請選擇想觀看的類型吧!",
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="王道", text="王道")),
+                    QuickReplyButton(action=MessageAction(label="校園", text="校園")),
+                    QuickReplyButton(action=MessageAction(label="戀愛", text="戀愛")),
+                    QuickReplyButton(action=MessageAction(label="運動", text="運動")),
+                    QuickReplyButton(action=MessageAction(label="喜劇", text="喜劇")),
+                    QuickReplyButton(action=MessageAction(label="異世界", text="異世界"))
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
