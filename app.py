@@ -7,10 +7,40 @@ from linebot.exceptions import (
 )
 from linebot.models import *
 import os
+import requests
+import csv
+import io
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
+
+# 远程 CSV 文件 URL
+CSV_URLS = {
+    "王道": "https://github.com/weichen1357/linebot_openai/blob/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv?raw=true",
+    # Add more URLs for other categories as needed
+}
+
+def read_csv_from_url(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        csv_file = io.StringIO(response.text)
+        csvreader = csv.DictReader(csv_file)
+        result = [row for row in csvreader]
+        return result
+    else:
+        return []
+
+def format_reply(result, category):
+    reply_1 = f'這裡依照近期人氣為您推薦5部「{category}」類別動漫：\n\n'
+    for index, value in enumerate(result[:5]):
+        reply = (f'{index + 1}.『{value["name"]}』\n'
+                 f'人氣：{value["popularity"]}\n'
+                 f'上架時間：{value["date"]}\n'
+                 f'以下是觀看連結：\n'
+                 f'{value["url"]}\n')
+        reply_1 += reply
+    return reply_1
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -85,6 +115,12 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text in CSV_URLS:
+        category = event.message.text
+        url = CSV_URLS[category]
+        data = read_csv_from_url(url)
+        reply = format_reply(data, category)
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
