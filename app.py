@@ -6,33 +6,11 @@ from linebot.exceptions import (
     InvalidSignatureError
 )
 from linebot.models import *
-import pandas as pd
 import os
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
-
-# 读取 CSV 文件
-# 注意：这里需要使用原始的 GitHub 链接，而不是文件在 GitHub 网站上的链接
-df = pd.read_csv("https://raw.githubusercontent.com/weichen1357/linebot_openai/master/%E7%8E%8B%E9%81%93%E7%95%AA%E6%95%B4%E5%90%88%E6%95%B8%E6%93%9A.csv")
-
-# 根据类别过滤动漫数据
-def filter_anime_by_category(category, df):
-    filtered_df = df[df['category'] == category]
-    return filtered_df
-
-# 生成动漫信息回复消息
-def Category(result, msg): 
-    reply_1 = f'這裡依照近期人氣為您推薦5部｢{msg}｣類別動漫：\n\n' 
-    for index, value in result.iterrows(): 
-        reply = (f'{index + 1}. 『{value["name"]}』\n' 
-                f'人氣：{value["popularity"]}\n' 
-                f'上架時間：{value["date"]}\n' 
-                f'以下是觀看連結：\n' 
-                f'{value["url"]}\n') 
-        reply_1 = reply_1 + reply 
-    return reply_1
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -66,6 +44,31 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "本季度新番":
+        print("本季度新番 button clicked")
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，請選擇年份",
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
+                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text in ["2023", "2024"]:
+        print(f"Year selected: {event.message.text}")
+        if event.message.text == "2023":
+            seasons = ["冬", "春", "夏", "秋"]
+        else:
+            seasons = ["冬", "春"]
+
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，接著請選擇季度項目",
+            quick_reply=QuickReply(items=quick_reply_items)
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
         reply_message = TextSendMessage(
@@ -82,13 +85,6 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "王道":
-        print("王道 button clicked")
-        # 筛选王道类别的动漫
-        wangdao_anime = filter_anime_by_category("王道", df)
-        # 获取王道类别动漫的推荐消息
-        reply = Category(wangdao_anime.head(5), "王道")
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？"))
@@ -99,7 +95,7 @@ def handle_postback(event):
     user_name = user_profile.display_name
     print(f"Received postback event from {user_name}: {event.postback.data}")
 
-    # 直接回复 PostbackAction 的数据
+    # Directly reply with the data from the PostbackAction
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
 @handler.add(MemberJoinedEvent)
