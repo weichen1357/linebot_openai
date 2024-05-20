@@ -20,27 +20,34 @@ user_data = {}
 def fetch_csv_data(url):
     try:
         response = requests.get(url)
-        response.raise_for_status()
+        response.raise_for_status()  # 检查是否有错误发生
         csv_data = response.text
         return csv_data
     except requests.exceptions.RequestException as e:
         print("Error fetching CSV data:", e)
         return None
 
-def recommend_random_anime():
-    categories = ["王道", "校園", "戀愛", "運動", "喜劇", "異世界"]
-    category = random.choice(categories)
-    url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
-    csv_data = fetch_csv_data(url)
-    if csv_data:
-        rows = list(csv.reader(csv_data.splitlines()))
-        next(rows)  # Skip the header
-        if rows:
-            anime = random.choice(rows)
-            name, popularity, date, url, img = anime
-            message = f"隨機推薦您一部「{category}」類別的動漫:\n\n『{name}』\n人氣: {popularity}\n上架时间: {date}\n以下是觀看連結:\n{url}"
-            return message
-    return "抱歉，無法推薦動漫。"
+def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
+    try:
+        csv_reader = csv.reader(csv_content.splitlines())
+        next(csv_reader)  # 跳过标题行
+        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
+        # 随机挑选五个
+        sampled_rows = random.sample(rows, min(5, len(rows)))
+        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
+        for count, row in enumerate(sampled_rows, start=start_index):
+            name, popularity, date, url, img = row
+            message += f"{count}. 『{popularity}』\n人氣: {name}\n上架时间: {date}\n以下是觀看連結:\n{url}\n\n"
+        return message, sampled_rows
+    except csv.Error as e:
+        print("Error parsing CSV:", e)
+        return None, []
+# 定義類別列表
+categories = ["王道", "校園", "戀愛", "運動", "喜劇", "異世界"]
+
+# 函數：隨機選擇一個類別
+def select_random_category():
+    return random.choice(categories)
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -178,9 +185,14 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"歐虧，那祝你影片欣賞愉快!"))
     elif event.message.text == "今天來看啥":
         print("今天來看啥 button clicked")
-        message = recommend_random_anime()
-        print("Generated message:", message)  # Debug print to see the message generated
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"@{user_name} 您好，想消磨時間卻不知道要看哪一部動漫嗎? 隨機為您推薦一部人氣動漫:\n\n{message}"))
+        category = select_random_category()
+        url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message, _ = parse_csv_data(csv_data, category)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取推薦的番劇列表。"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
@@ -190,6 +202,7 @@ def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received postback event from {user_name}: {event.postback.data}")
+    # Directly reply with the data from the PostbackAction
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
 @handler.add(MemberJoinedEvent)
@@ -202,4 +215,4 @@ def welcome(event):
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port)  
