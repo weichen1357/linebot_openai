@@ -27,7 +27,7 @@ def fetch_csv_data(url):
         print("Error fetching CSV data:", e)
         return None
 
-def parse_csv_data(csv_content, category, exclude_list=None):
+def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
         next(csv_reader)  # 跳过标题行
@@ -35,9 +35,9 @@ def parse_csv_data(csv_content, category, exclude_list=None):
         # 随机挑选五个
         sampled_rows = random.sample(rows, min(5, len(rows)))
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
-        for count, row in enumerate(sampled_rows):
+        for count, row in enumerate(sampled_rows, start=start_index):
             name, popularity, date, url, img = row
-            message += f"{count + 1}.『{popularity}』\n人氣: {name}\n上架时间: {date}\n以下是觀看連結:\n{url}\n\n"
+            message += f"{count}. 『{popularity}』\n人氣: {name}\n上架时间: {date}\n以下是觀看連結:\n{url}\n\n"
         return message, sampled_rows
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -64,7 +64,7 @@ def handle_message(event):
     print(f"Received message from {user_name}: {event.message.text}")
 
     if user_id not in user_data:
-        user_data[user_id] = {'category': None, 'seen': []}
+        user_data[user_id] = {'category': None, 'seen': [], 'count': 0}
 
     if event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
@@ -100,9 +100,11 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{event.message.text}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message, sampled_rows = parse_csv_data(csv_data, event.message.text)
             user_data[user_id]['category'] = event.message.text
+            user_data[user_id]['count'] = 0
+            message, sampled_rows = parse_csv_data(csv_data, event.message.text)
             user_data[user_id]['seen'] = [row[0] for row in sampled_rows]
+            user_data[user_id]['count'] += len(sampled_rows)
 
             buttons_template = TemplateSendMessage(
                 alt_text="是否要再追加五部動漫？",
@@ -126,8 +128,10 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message, sampled_rows = parse_csv_data(csv_data, category, exclude_list=user_data[user_id]['seen'])
+            start_index = user_data[user_id]['count'] + 1
+            message, sampled_rows = parse_csv_data(csv_data, category, exclude_list=user_data[user_id]['seen'], start_index=start_index)
             user_data[user_id]['seen'].extend([row[0] for row in sampled_rows])
+            user_data[user_id]['count'] += len(sampled_rows)
 
             buttons_template = TemplateSendMessage(
                 alt_text="是否要再追加五部動漫？",
