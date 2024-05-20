@@ -27,6 +27,22 @@ def fetch_csv_data(url):
         print("Error fetching CSV data:", e)
         return None
 
+def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
+    try:
+        csv_reader = csv.reader(csv_content.splitlines())
+        next(csv_reader)
+        rows = [row for row in csv_reader if len(row) == 5]
+
+        if exclude_list:
+            rows = [row for row in rows if row[0] not in exclude_list]
+
+        sampled_rows = rows[:5]  # 取前五个或剩下的
+        message = "\n".join([f"『{row[1]}』\n人氣: {row[0]}\n上架時間: {row[2]}\n以下是觀看連結:\n{row[3]}" for row in sampled_rows])
+        return message, sampled_rows
+    except csv.Error as e:
+        print("Error parsing CSV:", e)
+        return None, []
+
 def parse_csv_data_for_random_pick(csv_content):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
@@ -115,7 +131,7 @@ def handle_message(event):
             )
 
             line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text=message),
+                TextSendMessage(text=f"這裡為您推薦一部人氣動漫:\n\n{message}"),
                 buttons_template
             ])
         else:
@@ -142,7 +158,7 @@ def handle_message(event):
             )
 
             line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text=message),
+                TextSendMessage(text=f"這裡為您推薦一部人氣動漫:\n\n{message}"),
                 buttons_template
             ])
         else:
