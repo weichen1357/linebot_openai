@@ -35,7 +35,7 @@ def parse_csv_data(csv_content, category):
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
         for count, row in enumerate(sampled_rows):
             name, popularity, date, url, img = row
-            message += f"{count + 1}.『{popularity}』\n  人氣: {name}\n  上架时间: {date}\n  以下是觀看連結:\n      {url}\n\n"
+            message += f"{count + 1}.『{popularity}』\n  人氣: {name}\n  上架时间: {date}\n  以下是觀看連結:\n  {url}\n\n"
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -75,7 +75,7 @@ def handle_message(event):
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
         reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，想觀看什麼類型的動漫呢？请選取您想觀看的類型吧！",
+            text=f"@{user_name} 您好，想觀看什麼類型的動漫呢？請選取您想觀看的類型吧！",
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="王道", text="王道")),
