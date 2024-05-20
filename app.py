@@ -20,7 +20,7 @@ user_data = {}
 def fetch_csv_data(url):
     try:
         response = requests.get(url)
-        response.raise_for_status()
+        response.raise_for_status()  # 检查是否有错误发生
         csv_data = response.text
         return csv_data
     except requests.exceptions.RequestException as e:
@@ -30,31 +30,18 @@ def fetch_csv_data(url):
 def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)
-        rows = [row for row in csv_reader if len(row) == 5]
-
-        if exclude_list:
-            rows = [row for row in rows if row[0] not in exclude_list]
-
-        sampled_rows = rows[:5]  # 取前五个或剩下的
-        message = "\n".join([f"『{row[1]}』\n人氣: {row[0]}\n上架時間: {row[2]}\n以下是觀看連結:\n{row[3]}" for row in sampled_rows])
+        next(csv_reader)  # 跳过标题行
+        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
+        # 随机挑选五个
+        sampled_rows = random.sample(rows, min(5, len(rows)))
+        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
+        for count, row in enumerate(sampled_rows, start=start_index):
+            name, popularity, date, url, img = row
+            message += f"{count}. 『{popularity}』\n人氣: {name}\n上架时间: {date}\n以下是觀看連結:\n{url}\n\n"
         return message, sampled_rows
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None, []
-
-def parse_csv_data_for_random_pick(csv_content):
-    try:
-        csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)
-        rows = [row for row in csv_reader if len(row) == 5]
-        random_row = random.choice(rows)
-        name, popularity, date, url, img = random_row
-        message = f"這裡為您推薦一部人氣動漫:\n\n『{popularity}』\n人氣: {name}\n上架时间: {date}\n以下是觀看連結:\n{url}\n"
-        return message
-    except csv.Error as e:
-        print("Error parsing CSV:", e)
-        return None
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -131,7 +118,7 @@ def handle_message(event):
             )
 
             line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text=f"這裡為您推薦一部人氣動漫:\n\n{message}"),
+                TextSendMessage(text=message),
                 buttons_template
             ])
         else:
@@ -158,24 +145,13 @@ def handle_message(event):
             )
 
             line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text=f"這裡為您推薦一部人氣動漫:\n\n{message}"),
+                TextSendMessage(text=message),
                 buttons_template
             ])
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取更多{category}番剧列表。"))
     elif event.message.text == "否":
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"歐虧，那祝你影片欣賞愉快!"))
-    elif event.message.text == "今天來看啥":
-        categories = ["王道", "校園", "戀愛", "運動", "喜劇", "異世界"]
-        random_category = random.choice(categories)
-        url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{random_category}.csv"
-        csv_data = fetch_csv_data(url)
-        if csv_data:
-            message = parse_csv_data_for_random_pick(csv_data)
-            reply_message = f"@{user_name} 您好，想消磨時間卻不知道看哪一部動漫嗎?\n隨機為您推薦一部人氣動漫:\n\n{message}"
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，无法获取推薦的番剧列表。"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
@@ -185,6 +161,7 @@ def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received postback event from {user_name}: {event.postback.data}")
+    # Directly reply with the data from the PostbackAction
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
 @handler.add(MemberJoinedEvent)
