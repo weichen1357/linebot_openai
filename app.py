@@ -189,7 +189,7 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message, _ = parse_csv_data(csv_data, category)
+            message = parse_csv_data(csv_data, category, single=True)  # 只返回一個動漫信息
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取推薦的番劇列表。"))
