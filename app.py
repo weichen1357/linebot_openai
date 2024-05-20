@@ -42,6 +42,12 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None, []
+# 定義類別列表
+categories = ["王道", "校園", "戀愛", "運動", "喜劇", "異世界"]
+
+# 函數：隨機選擇一個類別
+def select_random_category():
+    return random.choice(categories)
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -177,6 +183,16 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取更多{category}番剧列表。"))
     elif event.message.text == "否":
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"歐虧，那祝你影片欣賞愉快!"))
+    elif event.message.text == "今天來看啥":
+        print("今天來看啥 button clicked")
+        category = select_random_category()
+        url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message, _ = parse_csv_data(csv_data, category)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取推薦的番劇列表。"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
