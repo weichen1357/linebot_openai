@@ -79,6 +79,31 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "本季度新番":
+        print("本季度新番 button clicked")
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，請選擇年份",
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
+                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text in ["2023", "2024"]:
+        print(f"Year selected: {event.message.text}")
+        if event.message.text == "2023":
+            seasons = ["冬", "春", "夏", "秋"]
+        else:
+            seasons = ["冬", "春"]
+
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 您好，接著請選擇季度項目",
+            quick_reply=QuickReply(items=quick_reply_items)
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
         reply_message = TextSendMessage(
