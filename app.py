@@ -103,22 +103,16 @@ def handle_message(event):
             message, sampled_rows = parse_csv_data(csv_data, event.message.text)
             user_data[user_id]['category'] = event.message.text
             user_data[user_id]['seen'] = [row[0] for row in sampled_rows]
-
-            buttons_template = TemplateSendMessage(
-                alt_text="是否要再追加五部動漫？",
-                template=ButtonsTemplate(
-                    text=f"@{user_name} 是否要再追加五部動漫呢？",
-                    actions=[
-                        MessageAction(label="是", text="是"),
-                        MessageAction(label="否", text="否")
+            follow_up_message = TextSendMessage(
+                text=f"@{user_name} 是否要再追加五部動漫呢？",
+                quick_reply=QuickReply(
+                    items=[
+                        QuickReplyButton(action=MessageAction(label="是", text="是")),
+                        QuickReplyButton(action=MessageAction(label="否", text="否"))
                     ]
                 )
             )
-
-            line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text=message),
-                buttons_template
-            ])
+            line_bot_api.reply_message(event.reply_token, [TextSendMessage(text=message), follow_up_message])
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取{event.message.text}番剧列表。"))
     elif event.message.text == "是" and user_data[user_id]['category']:
@@ -128,22 +122,16 @@ def handle_message(event):
         if csv_data:
             message, sampled_rows = parse_csv_data(csv_data, category, exclude_list=user_data[user_id]['seen'])
             user_data[user_id]['seen'].extend([row[0] for row in sampled_rows])
-
-            buttons_template = TemplateSendMessage(
-                alt_text="是否要再追加五部動漫？",
-                template=ButtonsTemplate(
-                    text=f"@{user_name} 是否要再追加五部動漫呢？",
-                    actions=[
-                        MessageAction(label="是", text="是"),
-                        MessageAction(label="否", text="否")
+            follow_up_message = TextSendMessage(
+                text=f"@{user_name} 是否要再追加五部動漫呢？",
+                quick_reply=QuickReply(
+                    items=[
+                        QuickReplyButton(action=MessageAction(label="是", text="是")),
+                        QuickReplyButton(action=MessageAction(label="否", text="否"))
                     ]
                 )
             )
-
-            line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text=message),
-                buttons_template
-            ])
+            line_bot_api.reply_message(event.reply_token, [TextSendMessage(text=message), follow_up_message])
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取更多{category}番剧列表。"))
     elif event.message.text == "否":
