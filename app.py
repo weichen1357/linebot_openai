@@ -20,7 +20,7 @@ user_data = {}
 def fetch_csv_data(url):
     try:
         response = requests.get(url)
-        response.raise_for_status()  # 检查是否有错误发生
+        response.raise_for_status()
         csv_data = response.text
         return csv_data
     except requests.exceptions.RequestException as e:
@@ -30,9 +30,8 @@ def fetch_csv_data(url):
 def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)  # 跳过标题行
-        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
-        # 随机挑选五个
+        next(csv_reader)
+        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]
         sampled_rows = random.sample(rows, min(5, len(rows)))
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
         for count, row in enumerate(sampled_rows, start=start_index):
@@ -205,7 +204,6 @@ def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received postback event from {user_name}: {event.postback.data}")
-    # Directly reply with the data from the PostbackAction
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
 @handler.add(MemberJoinedEvent)
