@@ -27,16 +27,22 @@ def fetch_csv_data(url):
         print("Error fetching CSV data:", e)
         return None
 
-def parse_csv_data(csv_content):
+def parse_csv_data(csv_content, single=False):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
         next(csv_reader)  # 跳过标题行
         rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
-        message = ""
-        for row in rows:
+        if single:
+            row = random.choice(rows)  # 随机选择一行
             name, popularity, date, url, img = row
-            message += f"動漫名稱：{name}\n人氣：{popularity}\n上架時間：{date}\n觀看連結：{url}\n\n"
-        return message
+            message = f"動漫名稱：{name}\n人氣：{popularity}\n上架時間：{date}\n觀看連結：{url}\n\n"
+            return message
+        else:
+            message = ""
+            for row in rows:
+                name, popularity, date, url, img = row
+                message += f"動漫名稱：{name}\n人氣：{popularity}\n上架時間：{date}\n觀看連結：{url}\n\n"
+            return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None
@@ -133,7 +139,7 @@ def handle_message(event):
         csv_data = fetch_csv_data(url)
         if csv_data:
             start_index = user_data[user_id]['count'] + 1
-            message, _ = parse_csv_data(csv_data)
+            message = parse_csv_data(csv_data)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取更多{category}番剧列表。"))
@@ -145,7 +151,7 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message = parse_csv_data(csv_data)
+            message = parse_csv_data(csv_data, single=True)  # 只返回一个动漫信息
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取推薦的番劇列表。"))
