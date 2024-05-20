@@ -42,6 +42,7 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None, []
+
 # 定義類別列表
 categories = ["王道", "校園", "戀愛", "運動", "喜劇", "異世界"]
 
@@ -189,7 +190,7 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message = parse_csv_data(csv_data, category, single=True)  # 只返回一個動漫信息
+            message, _ = parse_csv_data(csv_data, category, exclude_list=user_data[user_id]['seen'], start_index=1)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取推薦的番劇列表。"))
@@ -202,7 +203,7 @@ def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received postback event from {user_name}: {event.postback.data}")
-    # Directly reply with the data from the PostbackAction
+    # 直接回覆PostbackAction的資料
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
 @handler.add(MemberJoinedEvent)
@@ -215,4 +216,4 @@ def welcome(event):
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)  
+    app.run(host='0.0.0.0', port=port)
