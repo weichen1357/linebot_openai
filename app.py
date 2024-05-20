@@ -134,7 +134,7 @@ def handle_message(event):
         if csv_data:
             start_index = user_data[user_id]['count'] + 1
             message, _ = parse_csv_data(csv_data)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取更多{category}番剧列表。"))
     elif event.message.text == "否":
