@@ -25,17 +25,17 @@ def fetch_csv_data(url):
         print("Error fetching CSV data:", e)
         return None
 
-def parse_csv_data(csv_content):
+def parse_csv_data(csv_content, category):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
         next(csv_reader)  # 跳过标题行
         rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
         # 隨機挑選五個
         sampled_rows = random.sample(rows, min(5, len(rows)))
-        message = ""
+        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
         for count, row in enumerate(sampled_rows):
             name, popularity, date, url, img = row
-            message += f"{count + 1}.『{popularity}』\n  人氣: {name}\n  上架时间: {date}\n  以下是觀看連結: {url}\n\n"
+            message += f"{count + 1}.『{name}』\n  人氣: {popularity}\n  上架時間: {date}\n  以下是觀看連結: {url}\n\n"
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
