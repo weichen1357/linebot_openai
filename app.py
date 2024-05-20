@@ -15,6 +15,8 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
+user_data = {}
+
 def fetch_csv_data(url):
     try:
         response = requests.get(url)
@@ -25,21 +27,21 @@ def fetch_csv_data(url):
         print("Error fetching CSV data:", e)
         return None
 
-def parse_csv_data(csv_content, category):
+def parse_csv_data(csv_content, category, exclude_list=None):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
         next(csv_reader)  # 跳过标题行
-        rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
+        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
         # 随机挑选五个
         sampled_rows = random.sample(rows, min(5, len(rows)))
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
         for count, row in enumerate(sampled_rows):
             name, popularity, date, url, img = row
-            message += f"{count + 1}.『{popularity}』\n人氣: {name}\n上架时间: {date}\n以下是觀看連結: \n{url}\n\n"
-        return message
+            message += f"{count + 1}.『{popularity}』\n人氣: {name}\n上架时间: {date}\n以下是觀看連結:\n{url}\n\n"
+        return message, sampled_rows
     except csv.Error as e:
         print("Error parsing CSV:", e)
-        return None
+        return None, []
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -58,7 +60,12 @@ def callback():
 def handle_message(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
+    user_id = event.source.user_id
     print(f"Received message from {user_name}: {event.message.text}")
+
+    if user_id not in user_data:
+        user_data[user_id] = {'category': None, 'seen': []}
+
     if event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
@@ -93,10 +100,42 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{event.message.text}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message = parse_csv_data(csv_data, event.message.text)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+            message, sampled_rows = parse_csv_data(csv_data, event.message.text)
+            user_data[user_id]['category'] = event.message.text
+            user_data[user_id]['seen'] = [row[0] for row in sampled_rows]
+            follow_up_message = TextSendMessage(
+                text=f"@{user_name} 是否要再追加五部動漫呢？",
+                quick_reply=QuickReply(
+                    items=[
+                        QuickReplyButton(action=MessageAction(label="是", text="是")),
+                        QuickReplyButton(action=MessageAction(label="否", text="否"))
+                    ]
+                )
+            )
+            line_bot_api.reply_message(event.reply_token, [TextSendMessage(text=message), follow_up_message])
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取{event.message.text}番剧列表。"))
+    elif event.message.text == "是" and user_data[user_id]['category']:
+        category = user_data[user_id]['category']
+        url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message, sampled_rows = parse_csv_data(csv_data, category, exclude_list=user_data[user_id]['seen'])
+            user_data[user_id]['seen'].extend([row[0] for row in sampled_rows])
+            follow_up_message = TextSendMessage(
+                text=f"@{user_name} 是否要再追加五部動漫呢？",
+                quick_reply=QuickReply(
+                    items=[
+                        QuickReplyButton(action=MessageAction(label="是", text="是")),
+                        QuickReplyButton(action=MessageAction(label="否", text="否"))
+                    ]
+                )
+            )
+            line_bot_api.reply_message(event.reply_token, [TextSendMessage(text=message), follow_up_message])
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取更多{category}番剧列表。"))
+    elif event.message.text == "否":
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"歐虧，那祝你影片欣賞愉快!"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
