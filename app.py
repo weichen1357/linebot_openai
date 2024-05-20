@@ -152,6 +152,21 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取更多{category}番剧列表。"))
     elif event.message.text == "否":
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"歐虧，那祝你影片欣賞愉快!"))
+    elif event.message.text == "今天來看啥":
+        print("今天來看啥 button clicked")
+        categories = ["王道", "校園", "戀愛", "運動", "喜劇", "異世界"]
+        random_category = random.choice(categories)
+        url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{random_category}.csv"
+        csv_data = fetch_csv_data(url)
+        if csv_data:
+            message, _ = parse_csv_data(csv_data, random_category)
+            reply_message = TextSendMessage(
+                text=f"@{user_name} 您好，想消磨時間卻不知道看哪一部動漫嗎?\n隨機為您推薦一部人氣動漫\n\n{message}"
+            )
+            line_bot_api.reply_message(event.reply_token, reply_message)
+            return  # 在這裡加上 return，確保在推薦完動漫後立即返回，避免執行下面的程式碼段
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取隨機推薦的番剧列表。"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
