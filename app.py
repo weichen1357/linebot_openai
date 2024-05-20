@@ -30,12 +30,12 @@ def parse_csv_data(csv_content, category):
         csv_reader = csv.reader(csv_content.splitlines())
         next(csv_reader)  # 跳过标题行
         rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
-        # 隨機挑選五個
+        # 随机挑选五个
         sampled_rows = random.sample(rows, min(5, len(rows)))
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
         for count, row in enumerate(sampled_rows):
             name, popularity, date, url, img = row
-            message += f"{count + 1}.『{name}』\n  人氣: {popularity}\n  上架時間: {date}\n  以下是觀看連結: {url}\n\n"
+            message += f"{count + 1}.『{name}』\n  人氣: {popularity}\n  上架时间: {date}\n  以下是觀看連結: {url}\n\n"
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -93,7 +93,7 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{event.message.text}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message = parse_csv_data(csv_data)
+            message = parse_csv_data(csv_data, event.message.text)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取{event.message.text}番剧列表。"))
