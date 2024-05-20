@@ -27,21 +27,6 @@ def fetch_csv_data(url):
         print("Error fetching CSV data:", e)
         return None
 
-def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
-    try:
-        csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)
-        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]
-        sampled_rows = random.sample(rows, min(5, len(rows)))
-        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
-        for count, row in enumerate(sampled_rows, start=start_index):
-            name, popularity, date, url, img = row
-            message += f"{count}. 『{name}』\n人氣: {popularity}\n上架时间: {date}\n以下是觀看連結:\n{url}\n\n"
-        return message, sampled_rows
-    except csv.Error as e:
-        print("Error parsing CSV:", e)
-        return None, []
-
 def recommend_random_anime():
     categories = ["王道", "校園", "戀愛", "運動", "喜劇", "異世界"]
     category = random.choice(categories)
@@ -194,6 +179,7 @@ def handle_message(event):
     elif event.message.text == "今天來看啥":
         print("今天來看啥 button clicked")
         message = recommend_random_anime()
+        print("Generated message:", message)  # Debug print to see the message generated
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"@{user_name} 您好，想消磨時間卻不知道要看哪一部動漫嗎? 隨機為您推薦一部人氣動漫:\n\n{message}"))
     else:
         print("Other message received: " + event.message.text)
