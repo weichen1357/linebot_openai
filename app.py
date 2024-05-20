@@ -35,7 +35,7 @@ def parse_csv_data(csv_content, category):
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
         for count, row in enumerate(sampled_rows):
             name, popularity, date, url, img = row
-            message += f"{count + 1}.『{popularity}』\n  人氣: {name}\n  上架时间: {date}\n  以下是觀看連結:\n  {url}\n\n"
+            message += f"{count + 1}.『{popularity}』\n  人氣: {name}\n  上架时间: {date}\n  以下是觀看連結: \n  {url}\n\n"
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
