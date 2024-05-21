@@ -37,13 +37,13 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
         for count, row in enumerate(sampled_rows, start=start_index):
             name, popularity, date, url, img = row
-            message += f"{count}. 『{popularity}』\n人氣: {name}\n上架时间: {date}\n以下是觀看連結:\n{url}\n\n"
+            message += f"{count}. 『{name}』\n人氣: {popularity}\n上架时间: {date}\n以下是觀看連結:\n{url}\n\n"
         return message, sampled_rows
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None, []
 
-def parse_single_csv_data(csv_content, category):
+def parse_single_csv_data(csv_content, category, user_name):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
         next(csv_reader)  # 跳过标题行
@@ -51,8 +51,8 @@ def parse_single_csv_data(csv_content, category):
         sampled_row = random.choice(rows)
         name, popularity, date, url, img = sampled_row
         message = (f"@{user_name} 您好，想消磨時間卻不知道看哪一部動漫嗎?\n隨機為您推薦一部人氣動漫:\n\n"
-                   f"動漫名稱: {popularity}\n"
-                   f"人氣: {name}\n"
+                   f"動漫名稱: {name}\n"
+                   f"人氣: {popularity}\n"
                    f"上架时间: {date}\n"
                    f"以下是觀看連結:\n{url}")
         return message
@@ -176,7 +176,7 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{random_category}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message = parse_single_csv_data(csv_data, random_category)
+            message = parse_single_csv_data(csv_data, random_category, user_name)
             reply_message = TextSendMessage(text=message)
             line_bot_api.reply_message(event.reply_token, reply_message)
             return  # 在這裡加上 return，確保在推薦完動漫後立即返回，避免執行下面的程式碼段
