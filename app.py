@@ -196,6 +196,19 @@ def handle_message(event):
                 template=carousel_template
             )
             line_bot_api.reply_message(event.reply_token, template_message)
+            # 追加詢問是否想再看更多動漫
+            confirm_template = ConfirmTemplate(
+                text="還要再看五部動漫嗎？",
+                actions=[
+                    MessageAction(label="是", text="是"),
+                    MessageAction(label="否", text="否")
+                ]
+            )
+            confirm_message = TemplateSendMessage(
+                alt_text='還要再看五部動漫嗎？',
+                template=confirm_template
+            )
+            line_bot_api.push_message(user_id, confirm_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取動漫資料。😢"))
     elif event.message.text == "是":
@@ -206,31 +219,35 @@ def handle_message(event):
             url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
             csv_data = fetch_csv_data(url)
             if csv_data:
-                _, sampled_rows = parse_csv_data(csv_data, category, exclude_list=seen, start_index=count + 1)
+                message, sampled_rows = parse_csv_data(csv_data, category, exclude_list=seen, start_index=count + 1)
                 user_data[user_id]['seen'].extend([row[0] for row in sampled_rows])
                 user_data[user_id]['count'] += len(sampled_rows)
-
-                columns = []
-                for row in sampled_rows:
-                    name, popularity, date, url, img = row
-                    column = CarouselColumn(
-                        thumbnail_image_url=img,
-                        title=popularity[:40],  # 標題最多40個字元
-                        text=f"人氣: {name}\n上架時間: {date}",
-                        actions=[URIAction(label='觀看連結', uri=url)]
+            
+                buttons_template = TemplateSendMessage(
+                    alt_text="是否要再追加五部動漫？",
+                    template=ButtonsTemplate(
+                        text=f"@{user_name} 是否要再追加五部動漫呢？🤔",
+                        actions=[
+                            MessageAction(label="是", text="是"),
+                            MessageAction(label="否", text="否")
+                        ]
                     )
-                    columns.append(column)
-
-                carousel_template = CarouselTemplate(columns=columns)
-                template_message = TemplateSendMessage(
-                    alt_text='推薦動漫',
-                    template=carousel_template
                 )
-                line_bot_api.reply_message(event.reply_token, template_message)
+                line_bot_api.reply_message(event.reply_token, [
+                    TextSendMessage(text=message),
+                    buttons_template
+                ])
             else:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取動漫資料。😢"))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請先選擇一個類別。"))
+elif event.message.text == "否":
+    category = user_data[user_id].get('category')
+    if category:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"感謝您的使用😊。如果想再看其他類型的動漫，請點擊「愛看啥類別」來選擇其他類別吧！"))
+    else:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請先選擇一個類別。"))
+
     elif event.message.text == "否":
         category = user_data[user_id].get('category')
         if category:
