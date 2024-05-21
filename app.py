@@ -175,11 +175,11 @@ def handle_message(event):
         if csv_data:
             user_data[user_id]['category'] = event.message.text
             user_data[user_id]['count'] = 0
-            _, sampled_rows = parse_csv_data(csv_data, event.message.text)
+            sampled_rows = parse_csv_data(csv_data, event.message.text)
             user_data[user_id]['seen'] = [row[0] for row in sampled_rows]
             user_data[user_id]['count'] += len(sampled_rows)
             
-            category_message = f"這裡依照近期人氣為您推薦五部「{event.message.text}」類別動漫📺:"
+            
             
             columns = []
             for row in sampled_rows:
@@ -197,7 +197,7 @@ def handle_message(event):
                 alt_text='推薦動漫',
                 template=carousel_template
             )
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=category_message),template_message)
+            line_bot_api.reply_message(event.reply_token, template_message)
             # 追加詢問是否想再看更多動漫
             confirm_template = ConfirmTemplate(
                 text="還要再看五部動漫嗎？",
