@@ -38,10 +38,7 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
         # 隨機挑選五個
         sampled_rows = random.sample(rows, min(5, len(rows)))
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
-        for count, row in enumerate(sampled_rows, start=start_index):
-            name, popularity, date, url, img = row
-            message += f"{count}. 『{popularity}』\n✨ 人氣: {name}\n🗓 上架時間: {date}\n🔗 以下是觀看連結：\n{url}\n\n"
-        return message, sampled_rows
+        
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None, []
@@ -53,7 +50,13 @@ def parse_single_csv_data(csv_content, category, user_name):
         rows = [row for row in csv_reader if len(row) == 5]  # 避免空數據行
         sampled_row = random.choice(rows)
         name, popularity, date, url, img = sampled_row
-        
+        message = (f"@{user_name} 您好👋，想消磨時間卻不知道看哪一部動漫嗎?\n\n隨機為您推薦一部人氣動漫📺:\n"
+                   f"👇👇👇👇👇\n"
+                   f"🎥 {popularity}\n"
+                   f"🔥 人氣: {name}\n"
+                   f"🗓 上架時間: {date}\n"
+                   f"🔗 以下是觀看連結：\n{url}")
+        return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None
