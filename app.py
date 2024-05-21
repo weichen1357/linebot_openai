@@ -1,61 +1,3 @@
-from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
-from linebot.models import *
-import os
-import requests
-import csv
-import random
-
-app = Flask(__name__)
-line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
-handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
-
-user_data = {}
-
-def fetch_csv_data(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # 检查是否有错误发生
-        csv_data = response.text
-        return csv_data
-    except requests.exceptions.RequestException as e:
-        print("Error fetching CSV data:", e)
-        return None
-
-def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
-    try:
-        csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)  # 跳过标题行
-        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
-        sampled_rows = random.sample(rows, min(5, len(rows)))
-        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
-        for count, row in enumerate(sampled_rows, start=start_index):
-            name, popularity, date, url, img = row
-            message += f"{count}. 『{popularity}』\n✨ 人氣: {name}\n🗓 上架時間: {date}\n🔗 以下是觀看連結:\n{url}\n\n"
-        return message, sampled_rows
-    except csv.Error as e:
-        print("Error parsing CSV:", e)
-        return None, []
-
-def parse_single_csv_data(csv_content, category, user_name):
-    try:
-        csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)  # 跳过标题行
-        rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
-        sampled_row = random.choice(rows)
-        name, popularity, date, url, img = sampled_row
-        message = (f"@{user_name} 您好👋，想消磨時間卻不知道看哪一部動漫嗎?\n\n隨機為您推薦一部人氣動漫📺:\n"
-                   f"👇👇👇👇👇\n"
-                   f"🎥 {popularity}\n"
-                   f"🔥 人氣: {name}\n"
-                   f"🗓 上架時間: {date}\n"
-                   f"🔗 以下是觀看連結:\n{url}")
-        return message
-    except csv.Error as e:
-        print("Error parsing CSV:", e)
-        return None
-
 def scrape_anime_season(url):
     headers = {"User-Agent": 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
     anime_list = []
@@ -71,6 +13,12 @@ def scrape_anime_season(url):
             if a_tag:
                 anime_dict['link'] = urljoin(url, a_tag['href'])
                 anime_dict['title'] = a_tag.text.strip()
+
+        synopsis_div = entry.find('div', class_='synopsis')
+        if synopsis_div:
+            synopsis_p = synopsis_div.find('p')
+            if synopsis_p:
+                anime_dict['synopsis'] = synopsis_p.text.strip()
 
         date_span = entry.find('span', class_='item')
         if date_span:
@@ -89,19 +37,6 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
-
-@app.route("/callback", methods=['POST'])
-def callback():
-    signature = request.headers.get('X-Line-Signature')
-    body = request.get_data(as_text=True)
-    app.logger.info("Signature: " + signature)
-    app.logger.info("Request body: " + body)
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        app.logger.error("Invalid signature. Check your channel access token/channel secret.")
-        abort(400)
-    return 'OK'
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -246,12 +181,14 @@ def handle_message(event):
         
         if anime_list:
             message = f"@{user_name} 以下是{year}年{season}季度的新番動漫：\n\n"
-            for anime in anime_list:
-                message += f"🎥 {anime['title']}\n"
-                message += f"🔥 評分: {anime.get('score', 'N/A')}\n"
-                message += f"🗓 上架時間: {anime.get('release_date', 'N/A')}\n"
-                message += f"🔗 觀看連結: {anime['link']}\n\n"
+            for i, anime in enumerate(anime_list[:5], 1):
+                message += f"{i}.\n1.翻名：{anime['title']}\n"
+                message += f"2.簡介：{anime.get('synopsis', 'N/A')}\n"
+                message += f"3.評分：{anime.get('score', 'N/A')}/10\n"
+                message += f"4.觀看連結：{anime['link']}\n"
+                message += f"5.資料來源：{anime['link']}\n\n"
 
+            message += f"\n其餘新番查詢連結：https://myanimelist.net/anime/season/{year}/{season.lower()}"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season}季度的番劇列表。😢"))
