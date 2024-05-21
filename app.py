@@ -12,7 +12,7 @@ import csv
 import random
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from googletrans import Translator
+
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
@@ -70,8 +70,6 @@ def scrape_anime_season(url):
     soup = BeautifulSoup(response.text, 'html.parser')
     anime_entries = soup.find_all('div', class_='seasonal-anime')
 
-    translator = Translator()
-
     for entry in anime_entries:
         anime_dict = {}
         title_div = entry.find('div', class_='title')
@@ -79,17 +77,13 @@ def scrape_anime_season(url):
             a_tag = title_div.find('a', class_='link-title')
             if a_tag:
                 anime_dict['link'] = urljoin(url, a_tag['href'])
-                title_en = a_tag.text.strip()
-                title_zh = translator.translate(title_en, src='en', dest='zh-tw').text
-                anime_dict['title'] = title_zh
+                anime_dict['title'] = a_tag.text.strip()
 
         synopsis_div = entry.find('div', class_='synopsis')
         if synopsis_div:
             synopsis_p = synopsis_div.find('p')
             if synopsis_p:
-                synopsis_en = synopsis_p.text.strip()
-                synopsis_zh = translator.translate(synopsis_en, src='en', dest='zh-tw').text
-                anime_dict['synopsis'] = synopsis_zh
+                anime_dict['synopsis'] = synopsis_p.text.strip()
 
         date_span = entry.find('span', class_='item')
         if date_span:
@@ -257,27 +251,27 @@ def handle_message(event):
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text in ["冬", "春", "夏", "秋"]:
-        print("季節選擇:", event.message.text)
-        year = user_data[user_id].get('year')  # 獲取用戶選擇的年份
+        print("Season selected:", event.message.text)
+        year = user_data[user_id].get('year')  # 获取用户选择的年份
         season_dict = {"冬": "winter", "春": "spring", "夏": "summer", "秋": "fall"}
         season = season_dict[event.message.text]
         url = f"https://myanimelist.net/anime/season/{year}/{season}"
         anime_list = scrape_anime_season(url)
-    
+        
         if anime_list:
-            message = f"@{user_name} 以下是{year}年{event.message.text}季度的新番動畫：\n\n"
+            message = f"@{user_name} 以下是{year}年{season_dict[event.message.text]}季度的新番动漫：\n\n"
             for i, anime in enumerate(anime_list[:5], 1):
                 message += f"{i}."
-                message += f"片名：{anime['title']}\n"
+                message += f"翻名：{anime['title']}\n"
                 message += f"簡介：{anime.get('synopsis', 'N/A')}\n"
                 message += f"評分：{anime.get('score', 'N/A')}/10\n"
                 message += f"觀看連結：{anime['link']}\n"
                 message += f"資料來源：{anime['link']}\n\n"
 
-            message += f"\n其他新番查詢連結：https://myanimelist.net/anime/season/{year}/{season}"
+            message += f"\n其餘新番查詢連結：https://myanimelist.net/anime/season/{year}/{season}"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{event.message.text}季度的動畫列表。😢"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
