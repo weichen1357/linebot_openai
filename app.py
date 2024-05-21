@@ -53,13 +53,7 @@ def parse_single_csv_data(csv_content, category, user_name):
         rows = [row for row in csv_reader if len(row) == 5]  # 避免空數據行
         sampled_row = random.choice(rows)
         name, popularity, date, url, img = sampled_row
-        message = (f"@{user_name} 您好👋，想消磨時間卻不知道看哪一部動漫嗎?\n\n隨機為您推薦一部人氣動漫📺:\n"
-                   f"👇👇👇👇👇\n"
-                   f"🎥 {popularity}\n"
-                   f"🔥 人氣: {name}\n"
-                   f"🗓 上架時間: {date}\n"
-                   f"🔗 以下是觀看連結：\n{url}")
-        return message
+        
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None
