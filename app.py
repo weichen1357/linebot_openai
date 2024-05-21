@@ -13,6 +13,7 @@ import random
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
@@ -36,14 +37,45 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
         rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
         # 随机挑选五个
         sampled_rows = random.sample(rows, min(5, len(rows)))
-        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
+
+        bubbles = []
         for count, row in enumerate(sampled_rows, start=start_index):
             name, popularity, date, url, img = row
-            message += f"{count}. 『{popularity}』\n✨ 人氣: {name}\n🗓 上架時間: {date}\n🔗 以下是觀看連結:\n{url}\n\n"
-        return message, sampled_rows
+            bubble = BubbleContainer(
+                direction='ltr',
+                hero=ImageComponent(
+                    url=img,
+                    size='full',
+                    aspect_ratio='20:13',
+                    aspect_mode='cover'
+                ),
+                body=BoxComponent(
+                    layout='vertical',
+                    contents=[
+                        BoxComponent(
+                            layout='vertical',
+                            contents=[
+                                TextComponent(text=f'🎥 人氣: {name}', weight='bold', size='md'),
+                                TextComponent(text=f'上架時間: {date}', size='sm', wrap=True),
+                                TextComponent(text=f'人氣: {popularity}', size='sm', wrap=True),
+                                BoxComponent(
+                                    layout='vertical',
+                                    contents=[
+                                        URIAction(label='觀看連結', uri=url)
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+            bubbles.append(bubble)
+
+        carousel = CarouselContainer(contents=bubbles)
+        return carousel
     except csv.Error as e:
         print("Error parsing CSV:", e)
-        return None, []
+        return None
 
 def parse_single_csv_data(csv_content, category, user_name):
     try:
