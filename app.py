@@ -253,20 +253,18 @@ def handle_message(event):
         anime_list = scrape_anime_season(url)
         
         if anime_list:
-            translator = Translator()
-            # 從提供的動漫列表中隨機選擇五部動漫
-            sampled_anime = random.sample(anime_list, min(5, len(anime_list)))
-            
-            message = f"@{user_name} 以下是{year}年{event.message.text}季度的新番動漫：\n\n"
-            for i, anime in enumerate(sampled_anime, 1):
-                # 使用 Google Translate API 將英文標題翻譯成中文
-                chinese_title = translate_title(anime['title'], translator)
-                message += f"{i}. 名稱：{chinese_title}\n"
-                message += f"評分：{anime.get('score', 'N/A')}/10\n"
-                message += f"上架時間：{anime.get('release_date', 'N/A')}\n"
-                message += f"觀看連結：{anime['link']}\n\n"
-            
-            message += f"其餘新番查詢連結：\nhttps://myanimelist.net/anime/season/{year}/{season}"
+        # 從提供的動漫列表中隨機選擇五部動漫
+        sampled_anime = random.sample(anime_list, min(5, len(anime_list)))
+        
+        message = f"@{user_name} 以下是{year}年{event.message.text}季度的新番動漫：\n\n"
+        for i, anime in enumerate(sampled_anime, 1):
+            message += f"{i}. 翻名：{anime['title']}\n"
+            message += f"評分：{anime.get('score', 'N/A')}/10\n"
+            message += f"上架時間：{anime.get('release_date', 'N/A')}\n"
+            message += f"觀看連結：\n{anime['link']}\n"
+            message += f"資料來源：\n{anime['link']}\n\n"
+        
+        message += f"\n其餘新番查詢連結：\n https://myanimelist.net/anime/season/{year}/{season}"
             
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
