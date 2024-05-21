@@ -10,6 +10,8 @@ import os
 import requests
 import csv
 import random
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
@@ -256,13 +258,14 @@ def handle_message(event):
         anime_list = scrape_anime_season(url)
         
         if anime_list:
-            message = f"@{user_name} 以下是{year}年{season_dict[event.message.text]}季度的新番動漫：\n\n"
+            message = f"@{user_name} 以下是{year}年{season_dict[event.message.text]}季度的新番动漫：\n\n"
             for i, anime in enumerate(anime_list[:5], 1):
-                message += f"{i}.\n1.翻名：{anime['title']}\n"
-                message += f"2.簡介：{anime.get('synopsis', 'N/A')}\n"
-                message += f"3.評分：{anime.get('score', 'N/A')}/10\n"
-                message += f"4.觀看連結：{anime['link']}\n"
-                message += f"5.資料來源：{anime['link']}\n\n"
+                message += f"{i}."
+                message += f"翻名：{anime['title']}\n"
+                message += f"簡介：{anime.get('synopsis', 'N/A')}\n"
+                message += f"評分：{anime.get('score', 'N/A')}/10\n"
+                message += f"觀看連結：{anime['link']}\n"
+                message += f"資料來源：{anime['link']}\n\n"
 
             message += f"\n其餘新番查詢連結：https://myanimelist.net/anime/season/{year}/{season}"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
