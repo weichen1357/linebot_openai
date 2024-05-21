@@ -23,7 +23,7 @@ user_data = {}
 def fetch_csv_data(url):
     try:
         response = requests.get(url)
-        response.raise_for_status()  # 检查是否有错误发生
+        response.raise_for_status()  # 檢查是否有錯誤發生
         csv_data = response.text
         return csv_data
     except requests.exceptions.RequestException as e:
@@ -33,9 +33,9 @@ def fetch_csv_data(url):
 def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)  # 跳过标题行
-        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
-        # 随机挑选五个
+        next(csv_reader)  # 跳過標題行
+        rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空數據行
+        # 隨機挑選五個
         sampled_rows = random.sample(rows, min(5, len(rows)))
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
         for count, row in enumerate(sampled_rows, start=start_index):
@@ -49,8 +49,8 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
 def parse_single_csv_data(csv_content, category, user_name):
     try:
         csv_reader = csv.reader(csv_content.splitlines())
-        next(csv_reader)  # 跳过标题行
-        rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
+        next(csv_reader)  # 跳過標題行
+        rows = [row for row in csv_reader if len(row) == 5]  # 避免空數據行
         sampled_row = random.choice(rows)
         name, popularity, date, url, img = sampled_row
         message = (f"@{user_name} 您好👋，想消磨時間卻不知道看哪一部動漫嗎?\n\n隨機為您推薦一部人氣動漫📺:\n"
@@ -98,7 +98,7 @@ def scrape_anime_season(url):
         else:
             print("Score not found!")
 
-        img_div = entry.find('div', class_='image')  # 这里修正了 class_='image'
+        img_div = entry.find('div', class_='image')  # 這裡修正了 class_='image'
         if img_div and img_div.find('img'):
             img_tag = img_div.find('img')
             img_url = img_tag.get('data-src') or img_tag.get('src')
@@ -175,24 +175,27 @@ def handle_message(event):
         if csv_data:
             user_data[user_id]['category'] = event.message.text
             user_data[user_id]['count'] = 0
-            message, sampled_rows = parse_csv_data(csv_data, event.message.text)
+            _, sampled_rows = parse_csv_data(csv_data, event.message.text)
             user_data[user_id]['seen'] = [row[0] for row in sampled_rows]
             user_data[user_id]['count'] += len(sampled_rows)
 
-            buttons_template = TemplateSendMessage(
-                alt_text="是否要再追加五部動漫？",
-                template=ButtonsTemplate(
-                    text=f"@{user_name} 是否要再追加五部動漫呢？🤔",
-                    actions=[
-                        MessageAction(label="是", text="是"),
-                        MessageAction(label="否", text="否")
-                    ]
+            columns = []
+            for row in sampled_rows:
+                name, popularity, date, url, img = row
+                column = CarouselColumn(
+                    thumbnail_image_url=img,
+                    title=popularity[:40],  # 標題最多40個字元
+                    text=f"人氣: {name}\n上架時間: {date}",
+                    actions=[URIAction(label='觀看連結', uri=url)]
                 )
+                columns.append(column)
+
+            carousel_template = CarouselTemplate(columns=columns)
+            template_message = TemplateSendMessage(
+                alt_text='推薦動漫',
+                template=carousel_template
             )
-            line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text=message),
-                buttons_template
-            ])
+            line_bot_api.reply_message(event.reply_token, template_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取動漫資料。😢"))
     elif event.message.text == "是":
@@ -203,10 +206,27 @@ def handle_message(event):
             url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
             csv_data = fetch_csv_data(url)
             if csv_data:
-                message, sampled_rows = parse_csv_data(csv_data, category, exclude_list=seen, start_index=count + 1)
+                _, sampled_rows = parse_csv_data(csv_data, category, exclude_list=seen, start_index=count + 1)
                 user_data[user_id]['seen'].extend([row[0] for row in sampled_rows])
                 user_data[user_id]['count'] += len(sampled_rows)
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+
+                columns = []
+                for row in sampled_rows:
+                    name, popularity, date, url, img = row
+                    column = CarouselColumn(
+                        thumbnail_image_url=img,
+                        title=popularity[:40],  # 標題最多40個字元
+                        text=f"人氣: {name}\n上架時間: {date}",
+                        actions=[URIAction(label='觀看連結', uri=url)]
+                    )
+                    columns.append(column)
+
+                carousel_template = CarouselTemplate(columns=columns)
+                template_message = TemplateSendMessage(
+                    alt_text='推薦動漫',
+                    template=carousel_template
+                )
+                line_bot_api.reply_message(event.reply_token, template_message)
             else:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取動漫資料。😢"))
         else:
@@ -251,27 +271,32 @@ def handle_message(event):
         season = season_dict[event.message.text]
         url = f"https://myanimelist.net/anime/season/{year}/{season}"
         anime_list = scrape_anime_season(url)
-        
+
         if anime_list:
-        # 從提供的動漫列表中隨機選擇五部動漫
+            # 從提供的動漫列表中隨機選擇五部動漫
             sampled_anime = random.sample(anime_list, min(5, len(anime_list)))
-        
-            message = f"@{user_name} 以下是{year}年{event.message.text}季度的新番動漫：\n\n"
-            for i, anime in enumerate(sampled_anime, 1):
-                message += f"{i}. 🎬翻名：{anime['title']} \n"
-                message += f"⭐️評分：{anime.get('score', 'N/A')} \n"
-                message += f"📅上架時間：{anime.get('release_date', 'N/A')} \n"
-                message += f"🔗以下是觀看連結：\n{anime['link']} \n"
-                message += f"📄資料來源：\n{anime['link']} \n\n"
-        
-            message += f"\n其餘新番查詢連結：\nhttps://myanimelist.net/anime/season/{year}/{season} 🌐"
-            
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+
+            columns = []
+            for anime in sampled_anime:
+                column = CarouselColumn(
+                    thumbnail_image_url=anime['image_url'],
+                    title=anime['title'][:40],  # 標題最多40個字元
+                    text=f"評分: {anime.get('score', 'N/A')}\n上架時間: {anime.get('release_date', 'N/A')}",
+                    actions=[URIAction(label='觀看連結', uri=anime['link'])]
+                )
+                columns.append(column)
+
+            carousel_template = CarouselTemplate(columns=columns)
+            template_message = TemplateSendMessage(
+                alt_text=f'{year}年{event.message.text}季度新番',
+                template=carousel_template
+            )
+            line_bot_api.reply_message(event.reply_token, template_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     else:
         print("Other message received: " + event.message.text)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？🤔"))
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
@@ -286,7 +311,7 @@ def welcome(event):
     gid = event.source.group_id
     profile = line_bot_api.get_group_member_profile(gid, event.joined.members[0].user_id)
     name = profile.display_name
-    message = TextSendMessage(text=f'{name} 欢迎加入🎉')
+    message = TextSendMessage(text=f'{name} 歡迎加入🎉')
     line_bot_api.push_message(gid, message)
 
 if __name__ == "__main__":
