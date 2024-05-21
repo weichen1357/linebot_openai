@@ -12,7 +12,7 @@ import csv
 import random
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-
+from googletrans import Translator
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
@@ -70,6 +70,8 @@ def scrape_anime_season(url):
     soup = BeautifulSoup(response.text, 'html.parser')
     anime_entries = soup.find_all('div', class_='seasonal-anime')
 
+    translator = Translator()
+
     for entry in anime_entries:
         anime_dict = {}
         title_div = entry.find('div', class_='title')
@@ -77,13 +79,17 @@ def scrape_anime_season(url):
             a_tag = title_div.find('a', class_='link-title')
             if a_tag:
                 anime_dict['link'] = urljoin(url, a_tag['href'])
-                anime_dict['title'] = a_tag.text.strip()
+                title_en = a_tag.text.strip()
+                title_zh = translator.translate(title_en, src='en', dest='zh-tw').text
+                anime_dict['title'] = title_zh
 
         synopsis_div = entry.find('div', class_='synopsis')
         if synopsis_div:
             synopsis_p = synopsis_div.find('p')
             if synopsis_p:
-                anime_dict['synopsis'] = synopsis_p.text.strip()
+                synopsis_en = synopsis_p.text.strip()
+                synopsis_zh = translator.translate(synopsis_en, src='en', dest='zh-tw').text
+                anime_dict['synopsis'] = synopsis_zh
 
         date_span = entry.find('span', class_='item')
         if date_span:
