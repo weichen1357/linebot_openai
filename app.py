@@ -12,7 +12,7 @@ import csv
 import random
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-
+from linebot.models import CarouselContainer, BubbleContainer, BoxComponent, TextComponent, URIAction, ImageComponent
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
