@@ -52,18 +52,13 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
                 body=BoxComponent(
                     layout='vertical',
                     contents=[
+                        TextComponent(text=f'🎥 人氣: {name}', weight='bold', size='md'),
+                        TextComponent(text=f'上架時間: {date}', size='sm', wrap=True),
+                        TextComponent(text=f'人氣: {popularity}', size='sm', wrap=True),
                         BoxComponent(
                             layout='vertical',
                             contents=[
-                                TextComponent(text=f'🎥 人氣: {name}', weight='bold', size='md'),
-                                TextComponent(text=f'上架時間: {date}', size='sm', wrap=True),
-                                TextComponent(text=f'人氣: {popularity}', size='sm', wrap=True),
-                                BoxComponent(
-                                    layout='vertical',
-                                    contents=[
-                                        URIAction(label='觀看連結', uri=url)
-                                    ]
-                                )
+                                URIAction(label='觀看連結', uri=url)
                             ]
                         )
                     ]
