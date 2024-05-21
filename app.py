@@ -94,6 +94,8 @@ def scrape_anime_season(url):
             score_span = score_div.find('span', class_='text')
             if score_span:
                 anime_dict['score'] = score_span.text.strip()
+        else:
+            print("Score not found!")
 
         img_div = entry.find('div', class_='image')  # 這裡修正了 class_='image'
         if img_div and img_div.find('img'):
@@ -104,7 +106,6 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
-
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers.get('X-Line-Signature')
