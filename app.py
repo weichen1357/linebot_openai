@@ -34,10 +34,10 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
         rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
         # 随机挑选五个
         sampled_rows = random.sample(rows, min(5, len(rows)))
-        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫:\n\n"
+        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
         for count, row in enumerate(sampled_rows, start=start_index):
             name, popularity, date, url, img = row
-            message += f"{count}. 『{popularity}』\n人氣: {name}\n上架時間: {date}\n以下是觀看連結:\n{url}\n\n"
+            message += f"{count}. 『{popularity}』\n✨ 人氣: {name}\n🗓 上架時間: {date}\n🔗 以下是觀看連結:\n{url}\n\n"
         return message, sampled_rows
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -50,11 +50,12 @@ def parse_single_csv_data(csv_content, category, user_name):
         rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
         sampled_row = random.choice(rows)
         name, popularity, date, url, img = sampled_row
-        message = (f"@{user_name} 您好，想消磨時間卻不知道看哪一部動漫嗎?\n\n隨機為您推薦一部人氣動漫:\n\n"
-                   f"動漫名稱: {popularity}\n"
-                   f"人氣: {name}\n"
-                   f"上架時間: {date}\n"
-                   f"以下是觀看連結:\n{url}")
+        message = (f"@{user_name} 您好👋，想消磨時間卻不知道看哪一部動漫嗎?\n\n隨機為您推薦一部人氣動漫📺:\n"
+                   f"👇👇👇👇👇\n"
+                   f"🎥 {popularity}\n"
+                   f"🔥 人氣: {name}\n"
+                   f"🗓 上架時間: {date}\n"
+                   f"🔗 以下是觀看連結:\n{url}")
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -86,7 +87,7 @@ def handle_message(event):
     if event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，想了解ACG（A：动漫、C：漫画、G：电玩）的展览资讯吗？请选择您想了解的相关资讯吧！",
+            text=f"@{user_name} 您好📣，想了解ACG（A：动漫、C：漫画、G：电玩）的展览资讯吗？请选择您想了解的相关资讯吧！",
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="A：动漫", text="A：动漫")),
@@ -99,7 +100,7 @@ def handle_message(event):
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
         reply_message = TextSendMessage(
-            text=f"@{user_name} 您好，想觀看什麼類型的動漫呢？請選取您想觀看的類型吧！",
+            text=f"@{user_name} 您好😄，想觀看什麼類型的動漫呢？請選取您想觀看的類型吧！",
             quick_reply=QuickReply(
                 items=[
                     QuickReplyButton(action=MessageAction(label="王道", text="王道")),
@@ -126,7 +127,7 @@ def handle_message(event):
             buttons_template = TemplateSendMessage(
                 alt_text="是否要再追加五部動漫？",
                 template=ButtonsTemplate(
-                    text=f"@{user_name} 是否要再追加五部動漫呢？",
+                    text=f"@{user_name} 是否要再追加五部動漫呢？🤔",
                     actions=[
                         MessageAction(label="是", text="是"),
                         MessageAction(label="否", text="否")
@@ -139,7 +140,7 @@ def handle_message(event):
                 buttons_template
             ])
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取{event.message.text}番剧列表。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取{event.message.text}番剧列表。🙁"))
     elif event.message.text == "是" and user_data[user_id]['category']:
         category = user_data[user_id]['category']
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
@@ -153,7 +154,7 @@ def handle_message(event):
             buttons_template = TemplateSendMessage(
                 alt_text="是否要再追加五部動漫？",
                 template=ButtonsTemplate(
-                    text=f"@{user_name} 是否要再追加五部動漫呢？",
+                    text=f"@{user_name} 是否要再追加五部動漫呢？😊",
                     actions=[
                         MessageAction(label="是", text="是"),
                         MessageAction(label="否", text="否")
@@ -166,9 +167,9 @@ def handle_message(event):
                 buttons_template
             ])
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取更多{category}番剧列表。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，无法获取更多{category}番剧列表。😔"))
     elif event.message.text == "否":
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"歐虧，那祝你影片欣賞愉快!"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"歐虧，那祝你影片欣賞愉快!😊"))
     elif event.message.text == "今天來看啥":
         print("今天來看啥 button clicked")
         categories = ["王道", "校園", "戀愛", "運動", "喜劇", "異世界"]
@@ -177,14 +178,14 @@ def handle_message(event):
         csv_data = fetch_csv_data(url)
         if csv_data:
             message = parse_single_csv_data(csv_data, random_category, user_name)
-            reply_message = TextSendMessage(text=message)
+            reply_message = TextSendMessage(text=message + " 🎬")
             line_bot_api.reply_message(event.reply_token, reply_message)
             return  # 在這裡加上 return，確保在推薦完動漫後立即返回，避免執行下面的程式碼段
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取隨機推薦的番剧列表。"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取隨機推薦的番剧列表。😢"))
     else:
         print("Other message received: " + event.message.text)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
@@ -199,7 +200,7 @@ def welcome(event):
     gid = event.source.group_id
     profile = line_bot_api.get_group_member_profile(gid, event.joined.members[0].user_id)
     name = profile.display_name
-    message = TextSendMessage(text=f'{name} 欢迎加入')
+    message = TextSendMessage(text=f'{name} 欢迎加入🎉')
     line_bot_api.push_message(gid, message)
 
 if __name__ == "__main__":
