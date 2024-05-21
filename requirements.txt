@@ -6,4 +6,4 @@ bs4
 selenium
 by
 pandas
-googletrans
+googletrans==4.0.0-rc1
