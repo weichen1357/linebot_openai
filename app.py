@@ -60,6 +60,45 @@ def parse_single_csv_data(csv_content, category, user_name):
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None
+def scrape_anime_season(url):
+    headers = {"User-Agent": 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
+    anime_list = []
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    anime_entries = soup.find_all('div', class_='seasonal-anime')
+
+    for entry in anime_entries:
+        anime_dict = {}
+        title_div = entry.find('div', class_='title')
+        if title_div:
+            a_tag = title_div.find('a', class_='link-title')
+            if a_tag:
+                anime_dict['link'] = urljoin(url, a_tag['href'])
+                anime_dict['title'] = a_tag.text.strip()
+
+        synopsis_div = entry.find('div', class_='synopsis')
+        if synopsis_div:
+            synopsis_p = synopsis_div.find('p')
+            if synopsis_p:
+                anime_dict['synopsis'] = synopsis_p.text.strip()
+
+        date_span = entry.find('span', class_='item')
+        if date_span:
+            anime_dict['release_date'] = date_span.text.strip()
+
+        score_div = entry.find('span', class_='score-label')
+        if score_div:
+            anime_dict['score'] = score_div.text.strip()
+
+        img_div = entry.find('div', class_='image')  # 這裡修正了 class_='image'
+        if img_div and img_div.find('img'):
+            img_tag = img_div.find('img')
+            img_url = img_tag.get('data-src') or img_tag.get('src')
+            if img_url:
+                anime_dict['image_url'] = urljoin(url, img_url)
+
+        anime_list.append(anime_dict)
+    return anime_list
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -208,6 +247,27 @@ def handle_message(event):
             quick_reply=QuickReply(items=quick_reply_items)
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text in ["冬", "春", "夏", "秋"]:
+        print("Season selected:", event.message.text)
+        year = user_data[user_id].get('year')  # 获取用户选择的年份
+        season_dict = {"冬": "winter", "春": "spring", "夏": "summer", "秋": "fall"}
+        season = season_dict[event.message.text]
+        url = f"https://myanimelist.net/anime/season/{year}/{season}"
+        anime_list = scrape_anime_season(url)
+        
+        if anime_list:
+            message = f"@{user_name} 以下是{year}年{season_dict[event.message.text]}季度的新番動漫：\n\n"
+            for i, anime in enumerate(anime_list[:5], 1):
+                message += f"{i}.\n1.翻名：{anime['title']}\n"
+                message += f"2.簡介：{anime.get('synopsis', 'N/A')}\n"
+                message += f"3.評分：{anime.get('score', 'N/A')}/10\n"
+                message += f"4.觀看連結：{anime['link']}\n"
+                message += f"5.資料來源：{anime['link']}\n\n"
+
+            message += f"\n其餘新番查詢連結：https://myanimelist.net/anime/season/{year}/{season}"
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
