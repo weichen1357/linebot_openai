@@ -241,12 +241,6 @@ def handle_message(event):
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取動漫資料。😢"))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請先選擇一個類別。"))
-elif event.message.text == "否":
-    category = user_data[user_id].get('category')
-    if category:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"感謝您的使用😊。如果想再看其他類型的動漫，請點擊「愛看啥類別」來選擇其他類別吧！"))
-    else:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請先選擇一個類別。"))
 
     elif event.message.text == "否":
         category = user_data[user_id].get('category')
