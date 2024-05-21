@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from flask import Flask, request, abort
+from flask import Flask, requests, abort
 from linebot import (
     LineBotApi, WebhookHandler
 )
