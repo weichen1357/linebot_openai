@@ -43,6 +43,23 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
         print("Error parsing CSV:", e)
         return None, []
 
+def parse_single_csv_data(csv_content, category):
+    try:
+        csv_reader = csv.reader(csv_content.splitlines())
+        next(csv_reader)  # 跳过标题行
+        rows = [row for row in csv_reader if len(row) == 5]  # 避免空数据行
+        sampled_row = random.choice(rows)
+        name, popularity, date, url, img = sampled_row
+        message = (f"@{user_name} 您好，想消磨時間卻不知道看哪一部動漫嗎?\n隨機為您推薦一部人氣動漫:\n\n"
+                   f"動漫名稱: {popularity}\n"
+                   f"人氣: {name}\n"
+                   f"上架时间: {date}\n"
+                   f"以下是觀看連結:\n{url}")
+        return message
+    except csv.Error as e:
+        print("Error parsing CSV:", e)
+        return None
+
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers.get('X-Line-Signature')
@@ -159,10 +176,8 @@ def handle_message(event):
         url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{random_category}.csv"
         csv_data = fetch_csv_data(url)
         if csv_data:
-            message, _ = parse_csv_data(csv_data, random_category)
-            reply_message = TextSendMessage(
-                text=f"@{user_name} 您好，想消磨時間卻不知道看哪一部動漫嗎?\n隨機為您推薦一部人氣動漫\n\n{message}"
-            )
+            message = parse_single_csv_data(csv_data, random_category)
+            reply_message = TextSendMessage(text=message)
             line_bot_api.reply_message(event.reply_token, reply_message)
             return  # 在這裡加上 return，確保在推薦完動漫後立即返回，避免執行下面的程式碼段
         else:
