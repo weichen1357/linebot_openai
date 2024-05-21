@@ -1,10 +1,6 @@
 from flask import Flask, request, abort
-from linebot import (
-    LineBotApi, WebhookHandler
-)
-from linebot.exceptions import (
-    InvalidSignatureError
-)
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
 from linebot.models import *
 import os
 import requests
@@ -32,7 +28,6 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
         csv_reader = csv.reader(csv_content.splitlines())
         next(csv_reader)  # 跳过标题行
         rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空数据行
-        # 随机挑选五个
         sampled_rows = random.sample(rows, min(5, len(rows)))
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
         for count, row in enumerate(sampled_rows, start=start_index):
@@ -60,6 +55,40 @@ def parse_single_csv_data(csv_content, category, user_name):
     except csv.Error as e:
         print("Error parsing CSV:", e)
         return None
+
+def scrape_anime_season(url):
+    headers = {"User-Agent": 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
+    anime_list = []
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    anime_entries = soup.find_all('div', class_='seasonal-anime')
+
+    for entry in anime_entries:
+        anime_dict = {}
+        title_div = entry.find('div', class_='title')
+        if title_div:
+            a_tag = title_div.find('a', class_='link-title')
+            if a_tag:
+                anime_dict['link'] = urljoin(url, a_tag['href'])
+                anime_dict['title'] = a_tag.text.strip()
+
+        date_span = entry.find('span', class_='item')
+        if date_span:
+            anime_dict['release_date'] = date_span.text.strip()
+
+        score_div = entry.find('span', class_='score-label')
+        if score_div:
+            anime_dict['score'] = score_div.text.strip()
+
+        img_div = entry.find('div', class_='image')
+        if img_div and img_div.find('img'):
+            img_tag = img_div.find('img')
+            img_url = img_tag.get('data-src') or img_tag.get('src')
+            if img_url:
+                anime_dict['image_url'] = urljoin(url, img_url)
+
+        anime_list.append(anime_dict)
+    return anime_list
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -195,7 +224,7 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "2023" or event.message.text == "2024":
+    elif event.message.text in ["2023", "2024"]:
         print("Year selected:", event.message.text)
         if event.message.text == "2023":
             seasons = ["冬", "春", "夏", "秋"]
@@ -208,6 +237,24 @@ def handle_message(event):
             quick_reply=QuickReply(items=quick_reply_items)
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text in ["冬", "春", "夏", "秋"]:
+        print("Season selected:", event.message.text)
+        year = "2023" if "2023" in user_data[user_id] else "2024"
+        season = event.message.text
+        url = f"https://myanimelist.net/anime/season/{year}/{season.lower()}"
+        anime_list = scrape_anime_season(url)
+        
+        if anime_list:
+            message = f"@{user_name} 以下是{year}年{season}季度的新番動漫：\n\n"
+            for anime in anime_list:
+                message += f"🎥 {anime['title']}\n"
+                message += f"🔥 評分: {anime.get('score', 'N/A')}\n"
+                message += f"🗓 上架時間: {anime.get('release_date', 'N/A')}\n"
+                message += f"🔗 觀看連結: {anime['link']}\n\n"
+
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season}季度的番劇列表。😢"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
@@ -217,7 +264,6 @@ def handle_postback(event):
     user_profile = line_bot_api.get_profile(event.source.user_id)
     user_name = user_profile.display_name
     print(f"Received postback event from {user_name}: {event.postback.data}")
-    # Directly reply with the data from the PostbackAction
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.postback.data))
 
 @handler.add(MemberJoinedEvent)
