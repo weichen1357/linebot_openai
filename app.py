@@ -223,19 +223,38 @@ def handle_message(event):
                 user_data[user_id]['seen'].extend([row[0] for row in sampled_rows])
                 user_data[user_id]['count'] += len(sampled_rows)
             
-                buttons_template = TemplateSendMessage(
-                    alt_text="是否要再追加五部動漫？",
-                    template=ButtonsTemplate(
-                        text=f"@{user_name} 是否要再追加五部動漫呢？🤔",
-                        actions=[
-                            MessageAction(label="是", text="是"),
-                            MessageAction(label="否", text="否")
-                        ]
+                columns = []
+                for row in sampled_rows:
+                    name, popularity, date, url, img = row
+                    column = CarouselColumn(
+                        thumbnail_image_url=img,
+                        title=popularity[:40],  # 標題最多40個字元
+                        text=f"人氣: {name}\n上架時間: {date}",
+                        actions=[URIAction(label='觀看連結', uri=url)]
                     )
+                    columns.append(column)
+
+                carousel_template = CarouselTemplate(columns=columns)
+                template_message = TemplateSendMessage(
+                    alt_text='推薦動漫',
+                    template=carousel_template
+                )
+                # 追加詢問是否想再看更多動漫
+                confirm_template = ConfirmTemplate(
+                    text="還要再看五部動漫嗎？",
+                    actions=[
+                        MessageAction(label="是", text="是"),
+                        MessageAction(label="否", text="否")
+                    ]
+                )
+                confirm_message = TemplateSendMessage(
+                    alt_text='還要再看五部動漫嗎？',
+                    template=confirm_template
                 )
                 line_bot_api.reply_message(event.reply_token, [
                     TextSendMessage(text=message),
-                    buttons_template
+                    template_message,
+                    confirm_message
                 ])
             else:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取動漫資料。😢"))
