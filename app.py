@@ -40,7 +40,7 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
         message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
         for count, row in enumerate(sampled_rows, start=start_index):
             name, popularity, date, url, img = row
-            message += f"{count}. 『{popularity}』\n✨ 人氣: {name}\n🗓 上架時間: {date}\n🔗 以下是觀看連結:\n{url}\n\n"
+            message += f"{count}. 『{popularity}』\n✨ 人氣: {name}\n🗓 上架時間: {date}\n🔗 以下是觀看連結：\n{url}\n\n"
         return message, sampled_rows
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -58,7 +58,7 @@ def parse_single_csv_data(csv_content, category, user_name):
                    f"🎥 {popularity}\n"
                    f"🔥 人氣: {name}\n"
                    f"🗓 上架時間: {date}\n"
-                   f"🔗 以下是觀看連結:\n{url}")
+                   f"🔗 以下是觀看連結：\n{url}")
         return message
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -217,18 +217,33 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"感謝您的使用😊。如果想再看其他類型的動漫，請點擊「愛看啥類別」來選擇其他類別吧！"))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請先選擇一個類別。"))
-    elif event.message.text == "隨便推一部":
-        print("隨便推一部 button clicked")
-        url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/anime_all.csv"
-        csv_data = fetch_csv_data(url)
-        if csv_data:
-            message = parse_single_csv_data(csv_data, "隨便推一部", user_name)
-            if message:
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-            else:
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法隨機推薦動漫。😢"))
+    elif event.message.text == "本季度新番":
+        print("本季度新番 button clicked")
+        reply_message = TextSendMessage(
+            text="@{} 您好，請選擇年份".format(user_name),
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
+                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "2023" or event.message.text == "2024":
+        print("Year selected:", event.message.text)
+        user_data[user_id]['year'] = event.message.text  # 將選擇的年份存儲到 user_data 中
+        if event.message.text == "2023":
+            seasons = ["冬", "春", "夏", "秋"]
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取動漫資料。😢"))
+            seasons = ["冬", "春"]
+
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
+        reply_message = TextSendMessage(
+            text="@{} 您好，接著請選擇季度項目".format(user_name),
+            quick_reply=QuickReply(items=quick_reply_items)
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+
     elif event.message.text in ["冬", "春", "夏", "秋"]:
         print("Season selected:", event.message.text)
         year = user_data[user_id].get('year')  # 獲取用戶選擇的年份
@@ -249,17 +264,13 @@ def handle_message(event):
                 message += f"{i}. 名稱：{chinese_title}\n"
                 message += f"評分：{anime.get('score', 'N/A')}/10\n"
                 message += f"上架時間：{anime.get('release_date', 'N/A')}\n"
-                message += f"觀看連結：\n    {anime['link']}\n"
-                message += f"資料來源：\n{anime['link']}\n\n"
+                message += f"觀看連結：{anime['link']}\n\n"
             
-            message += f"\n其餘新番查詢連結：\n https://myanimelist.net/anime/season/{year}/{season}"
+            message += f"其餘新番查詢連結：\nhttps://myanimelist.net/anime/season/{year}/{season}"
             
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
-    else:
-        print("Other message received: " + event.message.text)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
@@ -280,3 +291,4 @@ def welcome(event):
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
