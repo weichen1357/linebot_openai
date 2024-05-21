@@ -255,26 +255,30 @@ def handle_message(event):
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text in ["冬", "春", "夏", "秋"]:
-        print("Season selected:", event.message.text)
-        year = user_data[user_id].get('year')  # 获取用户选择的年份
-        season_dict = {"冬": "winter", "春": "spring", "夏": "summer", "秋": "fall"}
-        season = season_dict[event.message.text]
-        url = f"https://myanimelist.net/anime/season/{year}/{season}"
-        anime_list = scrape_anime_season(url)
+    print("Season selected:", event.message.text)
+    year = user_data[user_id].get('year')  # 獲取用戶選擇的年份
+    season_dict = {"冬": "winter", "春": "spring", "夏": "summer", "秋": "fall"}
+    season = season_dict[event.message.text]
+    url = f"https://myanimelist.net/anime/season/{year}/{season}"
+    anime_list = scrape_anime_season(url)
+    
+    if anime_list:
+        # 從提供的動漫列表中隨機選擇五部動漫
+        sampled_anime = random.sample(anime_list, min(5, len(anime_list)))
         
-        if anime_list:
-            message = f"@{user_name} 以下是{year}年{event.message.text}季度的新番动漫：\n\n"
-            for i, anime in enumerate(anime_list[:5], 1):
-                message += f"{i}."
-                message += f"翻名：{anime['title']}\n"
-                message += f"評分：{anime.get('score', 'N/A')}/10\n"
-                message += f"觀看連結：\n{anime['link']}\n"
-                message += f"資料來源：\n{anime['link']}\n\n"
-
-            message += f"\n其餘新番查詢連結：\n https://myanimelist.net/anime/season/{year}/{season}"
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
+        message = f"@{user_name} 以下是{year}年{event.message.text}季度的新番動漫：\n\n"
+        for i, anime in enumerate(sampled_anime, 1):
+            message += f"{i}. 翻名：{anime['title']}\n"
+            message += f"評分：{anime.get('score', 'N/A')}/10\n"
+            message += f"上架時間：{anime.get('release_date', 'N/A')}\n"
+            message += f"觀看連結：\n{anime['link']}\n"
+            message += f"資料來源：\n{anime['link']}\n\n"
+        
+        message += f"\n其餘新番查詢連結：\n https://myanimelist.net/anime/season/{year}/{season}"
+        
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+    else:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
