@@ -258,13 +258,13 @@ def handle_message(event):
         
             message = f"@{user_name} 以下是{year}年{event.message.text}季度的新番動漫：\n\n"
             for i, anime in enumerate(sampled_anime, 1):
-                message += f"{i}. 翻名：{anime['title']}\n"
-                message += f"評分：{anime.get('score', 'N/A')}/10\n"
-                message += f"上架時間：{anime.get('release_date', 'N/A')}\n"
-                message += f"觀看連結：\n{anime['link']}\n"
-                message += f"資料來源：\n{anime['link']}\n\n"
+                message += f"{i}. 翻名：{anime['title']} 🎬\n"
+                message += f"評分：{anime.get('score', 'N/A')} ⭐️\n"
+                message += f"上架時間：{anime.get('release_date', 'N/A')} 📅\n"
+                message += f"觀看連結：\n{anime['link']} 🔗\n"
+                message += f"資料來源：\n{anime['link']} 📄\n\n"
         
-            message += f"\n其餘新番查詢連結：\n https://myanimelist.net/anime/season/{year}/{season}"
+            message += f"\n其餘新番查詢連結：\nhttps://myanimelist.net/anime/season/{year}/{season} 🌐"
             
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
@@ -292,4 +292,3 @@ def welcome(event):
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-
