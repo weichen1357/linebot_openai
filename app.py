@@ -87,12 +87,12 @@ def handle_message(event):
     if event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
         reply_message = TextSendMessage(
-            text=f"@{user_name} 您好📣，想了解ACG（A：动漫、C：漫画、G：电玩）的展览资讯吗？请选择您想了解的相关资讯吧！",
+            text=f"@{user_name} 您好📣，想了解ACG（A：動漫、C：漫畫、G：電玩）的展覽資訊嗎？請選擇您想了解的相關資訊吧！",
             quick_reply=QuickReply(
                 items=[
-                    QuickReplyButton(action=MessageAction(label="A：动漫", text="A：动漫")),
-                    QuickReplyButton(action=MessageAction(label="C：漫画", text="C：漫画")),
-                    QuickReplyButton(action=MessageAction(label="G：电玩", text="G：电玩"))
+                    QuickReplyButton(action=MessageAction(label="A：動漫", text="A：動漫")),
+                    QuickReplyButton(action=MessageAction(label="C：漫畫", text="C：漫畫")),
+                    QuickReplyButton(action=MessageAction(label="G：電玩", text="G：電玩"))
                 ]
             )
         )
@@ -183,6 +183,31 @@ def handle_message(event):
             return  # 在這裡加上 return，確保在推薦完動漫後立即返回，避免執行下面的程式碼段
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取隨機推薦的番剧列表。😢"))
+    elif event.message.text == "本季度新番":
+        print("本季度新番 button clicked")
+        reply_message = TextSendMessage(
+            text="@{} 您好，請選擇年份".format(user_name),
+            quick_reply=QuickReply(
+                items=[
+                    QuickReplyButton(action=MessageAction(label="2023", text="2023")),
+                    QuickReplyButton(action=MessageAction(label="2024", text="2024"))
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "2023" or event.message.text == "2024":
+        print("Year selected:", event.message.text)
+        if event.message.text == "2023":
+            seasons = ["冬", "春", "夏", "秋"]
+        else:
+            seasons = ["冬", "春"]
+
+        quick_reply_items = [QuickReplyButton(action=MessageAction(label=season, text=season)) for season in seasons]
+        reply_message = TextSendMessage(
+            text="@{} 您好，接著請選擇季度項目".format(user_name),
+            quick_reply=QuickReply(items=quick_reply_items)
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
