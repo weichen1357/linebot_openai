@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from flask import Flask, requests, abort
+from flask import Flask, abort
 from linebot import (
     LineBotApi, WebhookHandler
 )
@@ -91,7 +91,7 @@ def scrape_anime_season(url):
         if score_div:
             anime_dict['score'] = score_div.text.strip()
 
-        img_div = entry.find('div', class='image')
+        img_div = entry.find('div', class_='image')  # 這裡修正了 class_='image'
         if img_div and img_div.find('img'):
             img_tag = img_div.find('img')
             img_url = img_tag.get('data-src') or img_tag.get('src')
