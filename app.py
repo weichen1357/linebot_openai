@@ -89,9 +89,11 @@ def scrape_anime_season(url):
         if date_span:
             anime_dict['release_date'] = date_span.text.strip()
 
-        score_div = entry.find('span', class_='score-label')
+        score_div = entry.find('div', class_='score score-label')
         if score_div:
-            anime_dict['score'] = score_div.text.strip()
+            score_span = score_div.find('span', class_='text')
+            if score_span:
+                anime_dict['score'] = score_span.text.strip()
 
         img_div = entry.find('div', class_='image')  # 這裡修正了 class_='image'
         if img_div and img_div.find('img'):
