@@ -37,10 +37,10 @@ def parse_csv_data(csv_content, category, exclude_list=None, start_index=1):
         rows = [row for row in csv_reader if len(row) == 5 and row[0] not in (exclude_list or [])]  # 避免空數據行
         # 隨機挑選五個
         sampled_rows = random.sample(rows, min(5, len(rows)))
-        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:"
+        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
         for count, row in enumerate(sampled_rows, start=start_index):
             name, popularity, date, url, img = row
-            
+            message += f"{count}. 『{popularity}』\n✨ 人氣: {name}\n🗓 上架時間: {date}\n🔗 以下是觀看連結:\n{url}\n\n"
         return  message,sampled_rows
     except csv.Error as e:
         print("Error parsing CSV:", e)
@@ -175,12 +175,10 @@ def handle_message(event):
         if csv_data:
             user_data[user_id]['category'] = event.message.text
             user_data[user_id]['count'] = 0
-            sampled_rows = parse_csv_data(csv_data, event.message.text)
+            _, sampled_rows = parse_csv_data(csv_data, event.message.text)
             user_data[user_id]['seen'] = [row[0] for row in sampled_rows]
             user_data[user_id]['count'] += len(sampled_rows)
-            
-            
-            
+
             columns = []
             for row in sampled_rows:
                 name, popularity, date, url, img = row
@@ -254,7 +252,7 @@ def handle_message(event):
                     template=confirm_template
                 )
                 line_bot_api.reply_message(event.reply_token, [
-                   
+                    TextSendMessage(text=message),
                     template_message,
                     confirm_message
                 ])
