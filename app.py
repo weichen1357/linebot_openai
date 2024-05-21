@@ -259,11 +259,10 @@ def handle_message(event):
         anime_list = scrape_anime_season(url)
         
         if anime_list:
-            message = f"@{user_name} 以下是{year}年{season_dict[event.message.text]}季度的新番动漫：\n\n"
+            message = f"@{user_name} 以下是{year}年{event.message.text}季度的新番动漫：\n\n"
             for i, anime in enumerate(anime_list[:5], 1):
                 message += f"{i}."
                 message += f"翻名：{anime['title']}\n"
-                message += f"簡介：{anime.get('synopsis', 'N/A')}\n"
                 message += f"評分：{anime.get('score', 'N/A')}/10\n"
                 message += f"觀看連結：{anime['link']}\n"
                 message += f"資料來源：{anime['link']}\n\n"
