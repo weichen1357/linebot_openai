@@ -124,7 +124,7 @@ def handle_message(event):
     print(f"Received message from {user_name}: {event.message.text}")
 
     if user_id not in user_data:
-        user_data[user_id] = {'category': None, 'seen': [], 'count': 0}
+        user_data[user_id] = {'category': None, 'seen': [], 'count': 0, 'year': None}  # 在 user_data 中添加 year 字段
 
     if event.message.text == "ACG展覽資訊":
         print("ACG展覽資訊 button clicked")
@@ -239,6 +239,7 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "2023" or event.message.text == "2024":
         print("Year selected:", event.message.text)
+        user_data[user_id]['year'] = event.message.text  # 將選擇的年份存儲到 user_data 中
         if event.message.text == "2023":
             seasons = ["冬", "春", "夏", "秋"]
         else:
@@ -264,10 +265,10 @@ def handle_message(event):
                 message += f"{i}."
                 message += f"翻名：{anime['title']}\n"
                 message += f"評分：{anime.get('score', 'N/A')}/10\n"
-                message += f"觀看連結：{anime['link']}\n"
-                message += f"資料來源：{anime['link']}\n\n"
+                message += f"觀看連結：\n{anime['link']}\n"
+                message += f"資料來源：\n{anime['link']}\n\n"
 
-            message += f"\n其餘新番查詢連結：https://myanimelist.net/anime/season/{year}/{season}"
+            message += f"\n其餘新番查詢連結：\n https://myanimelist.net/anime/season/{year}/{season}"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
