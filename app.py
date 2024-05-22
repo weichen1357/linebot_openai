@@ -219,10 +219,10 @@ def handle_message(event):
             url = f"https://raw.githubusercontent.com/weichen1357/linebot_openai/master/{category}.csv"
             csv_data = fetch_csv_data(url)
             if csv_data:
-                message,sampled_rows = parse_csv_data(csv_data, category, exclude_list=seen, start_index=count + 1)
+                message, sampled_rows = parse_csv_data(csv_data, category, exclude_list=seen, start_index=count + 1)
                 user_data[user_id]['seen'].extend([row[0] for row in sampled_rows])
                 user_data[user_id]['count'] += len(sampled_rows)
-            
+                
                 columns = []
                 for row in sampled_rows:
                     name, popularity, date, url, img = row
@@ -251,8 +251,8 @@ def handle_message(event):
                     alt_text='還要再看五部動漫嗎？',
                     template=confirm_template
                 )
+                # 不需要傳 message，只傳多頁訊息
                 line_bot_api.reply_message(event.reply_token, [
-                    TextSendMessage(text = message),
                     template_message,
                     confirm_message
                 ])
