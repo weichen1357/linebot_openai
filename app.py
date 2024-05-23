@@ -109,67 +109,6 @@ def scrape_anime_season(url):
         anime_list.append(anime_dict)
     return anime_list
 
-def get_headers():
-    user_agents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
-    ]
-    headers = {'User-Agent': random.choice(user_agents)}
-    return headers
-
-def scrape_anime_info():
-    anime_list = []
-    url = 'https://ani.gamer.com.tw/'
-    try:
-        response = requests.get(url, headers=get_headers(), timeout=10)
-        response.encoding = 'utf-8'
-
-        if response.status_code == 200:
-            print(f'請求成功: {response.status_code}')
-
-            soup = BeautifulSoup(response.text, 'html.parser')
-            anime_items = soup.find_all('div', class_='ani_box')
-            for item in anime_items:
-                title = item.find('h1', class_='title').text.strip()
-                views = item.find('span', class_='num').text.strip()
-                anime_list.append({'title': title, 'views': views})
-        else:
-            print(f'請求失敗: {response.status_code}')
-    except Exception as e:
-        print('爬取失敗:', e)
-    return anime_list
-
-def convert_watch_number(anime_list):
-    for anime in anime_list:
-        try:
-            if '萬' in anime['views']:
-                anime['views'] = int(float(anime['views'].replace('萬', '')) * 10000)
-            else:
-                anime['views'] = int(anime['views'])
-        except ValueError:
-            anime['views'] = 0
-    return anime_list
-
-def aggregate_anime_info(anime_list):
-    aggregated_info = {}
-    for anime in anime_list:
-        title = anime['title']
-        if title in aggregated_info:
-            aggregated_info[title]['views'] += anime['views']
-        else:
-            aggregated_info[title] = {'views': anime['views']}
-    return aggregated_info
-
-def format_anime_info(anime_list):
-    sorted_anime = sorted(anime_list.items(), key=lambda x: x[1]['views'], reverse=True)
-    formatted_info = ''
-    for index, anime in enumerate(sorted_anime[:10], start=1):
-        title = anime[0]
-        views = anime[1]['views']
-        formatted_info += f"{index}. {title} - {views} 次觀看\n"
-    return formatted_info
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -401,16 +340,7 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, template_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
-    elif event.message.text == "播放排行榜":
-        print("播放排行榜 button clicked")
-        anime_list = scrape_anime_info()
-        anime_list = convert_watch_number(anime_list)
-        anime_list = aggregate_anime_info(anime_list)
-        anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
 
-        formatted_info = format_anime_info(anime_list)
-        reply_message = TextSendMessage(text=formatted_info)
-        line_bot_api.reply_message(event.reply_token, reply_message)
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？🤔"))
