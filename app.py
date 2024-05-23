@@ -4,12 +4,8 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import *
 import os
 import requests
-import csv
 import random
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
-from googletrans import Translator
-from linebot.models import TextSendMessage
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
@@ -88,6 +84,9 @@ def aggregate_anime_info(anime_list):
     return list(anime_dict.values())
 
 def format_anime_info(anime_list, user_name):
+    if not anime_list:
+        return f"@{user_name} 您好(你好)\n今天沒有找到任何動畫信息。"
+
     formatted_text = f"@{user_name} 您好(你好)\n揭曉今天播放次數最高的動畫排行榜 !\n\n"
     for i, anime in enumerate(anime_list, start=1):
         formatted_text += f"({i}) {anime['name']}\n"
@@ -97,10 +96,18 @@ def format_anime_info(anime_list, user_name):
     return formatted_text.strip()
 
 def get_anime_ranking(user_name):
+    print("Start getting anime ranking")
     anime_list = scrape_anime_info()
+    print("Scraped anime info:", anime_list)
+    if not anime_list:
+        return f"@{user_name} 您好(你好)\n今天沒有找到任何動畫信息。"
+
     anime_list = convert_watch_number(anime_list)
+    print("Converted watch numbers:", anime_list)
     anime_list = aggregate_anime_info(anime_list)
+    print("Aggregated anime info:", anime_list)
     anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
+    print("Sorted anime info:", anime_list)
     formatted_text = format_anime_info(anime_list, user_name)
     return formatted_text
 
@@ -130,6 +137,7 @@ def handle_message(event):
     if event.message.text == "播放排行榜":
         print("播放排行榜 button clicked")
         ranking_text = get_anime_ranking(user_name)
+        print("Ranking text:", ranking_text)
         reply_message = TextSendMessage(text=ranking_text)
         line_bot_api.reply_message(event.reply_token, reply_message)
     else:
