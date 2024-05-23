@@ -403,11 +403,13 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     elif event.message.text == "播放排行榜":
         print("播放排行榜 button clicked")
-        anime_info = scrape_anime_info()
-        anime_info = convert_watch_number(anime_info)
-        aggregated_info = aggregate_anime_info(anime_info)
-        formatted_info = format_anime_info(aggregated_info)
-        reply_message = TextSendMessage(text=f"@{user_name} 您好📣，揭曉今天播放次數最高的活動排行榜！\n\n{formatted_info}")
+        anime_list = scrape_anime_info()
+        anime_list = convert_watch_number(anime_list)
+        anime_list = aggregate_anime_info(anime_list)
+        anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
+
+        formatted_info = format_anime_info(anime_list)
+        reply_message = TextSendMessage(text=formatted_info)
         line_bot_api.reply_message(event.reply_token, reply_message)
     else:
         print("Other message received: " + event.message.text)
