@@ -13,11 +13,6 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import random
-
 def get_headers():
     user_agents = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
@@ -28,7 +23,7 @@ def get_headers():
     headers = {'User-Agent': random.choice(user_agents)}
     return headers
 
-def scrape_anime_info():
+def scrape_and_format_anime_info():
     anime_list = []
     url = 'https://ani.gamer.com.tw/'
     try:
@@ -42,7 +37,7 @@ def scrape_anime_info():
             newanime_item = soup.select_one('.timeline-ver > .newanime-block')
             if not newanime_item:
                 print('未找到動畫區塊')
-                return anime_list
+                return "未找到動畫區塊"
 
             anime_items = newanime_item.select('.newanime-date-area:not(.premium-block)')
 
@@ -62,49 +57,22 @@ def scrape_anime_info():
 
         else:
             print(f'請求失敗: {response.status_code}')
+            return f'請求失敗: {response.status_code}'
     except requests.RequestException as e:
         print(f"請求錯誤: {e}")
+        return f'請求錯誤: {e}'
     except Exception as e:
         print(f"未知錯誤: {e}")
-    finally:
-        return anime_list
+        return f'未知錯誤: {e}'
 
-def convert_watch_number(anime_list):
-    for anime in anime_list:
-        if '萬' in anime['watch_number']:
-            anime['watch_number'] = float(anime['watch_number'].replace('萬', '')) * 10000
-        else:
-            anime['watch_number'] = int(anime['watch_number'])
-    return anime_list
-
-def aggregate_anime_info(anime_list):
-    anime_dict = {}
-    for anime in anime_list:
-        if anime['name'] in anime_dict:
-            anime_dict[anime['name']]['watch_number'] += anime['watch_number']
-        else:
-            anime_dict[anime['name']] = anime
-    return list(anime_dict.values())
-
-def format_anime_info(anime_list):
     formatted_text = "@使用者 您好(你好)\n揭曉今天播放次數最高的動畫排行榜 !\n\n"
     for i, anime in enumerate(anime_list, start=1):
         formatted_text += f"({i}) {anime['name']}\n"
         formatted_text += f"集數: {anime['episode']}\n"
         formatted_text += f"觀看次數: {int(anime['watch_number'])}\n"
         formatted_text += f"點我馬上看: {anime['link']}\n\n"
+
     return formatted_text.strip()
-
-def main():
-    anime_list = scrape_anime_info()
-    anime_list = convert_watch_number(anime_list)
-    anime_list = aggregate_anime_info(anime_list)
-    anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
-
-    formatted_text = format_anime_info(anime_list)
-    print(formatted_text)
-
-
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -131,8 +99,8 @@ def handle_message(event):
 
     if event.message.text == "播放排行榜":
         print("播放排行榜 button clicked")
-        if __name__ == "__main__":
-            main()
+        
+        formatted_text = scrape_and_format_anime_info()  # 调用整合的函数获取动画信息
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=formatted_text))  # 将动画信息传递给回复消息的函数
     else:
         print("Other message received: " + event.message.text)
