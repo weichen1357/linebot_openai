@@ -435,10 +435,13 @@ def handle_message(event):
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     elif event.message.text == "播放排行榜":
-        print("播放排行榜 button clicked")
-        ranking_text = get_anime_ranking(user_name)
-        reply_message = TextSendMessage(text=ranking_text)
-        line_bot_api.reply_message(event.reply_token, reply_message)
+        # 调用爬虫函数获取动画信息
+        anime_info = get_top_anime_info()
+        # 格式化动画信息成消息
+        formatted_text = format_anime_info(anime_info)
+        # 发送消息给用户
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=formatted_text))
+
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？🤔"))
