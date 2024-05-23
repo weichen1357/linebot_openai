@@ -104,8 +104,7 @@ def main():
     formatted_text = format_anime_info(anime_list)
     print(formatted_text)
 
-if __name__ == "__main__":
-    main()
+
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -132,12 +131,8 @@ def handle_message(event):
 
     if event.message.text == "播放排行榜":
         print("播放排行榜 button clicked")
-        anime_list = scrape_anime_info()
-        anime_list = convert_watch_number(anime_list)
-        anime_list = aggregate_anime_info(anime_list)
-        anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
-
-        formatted_text = format_anime_info(anime_list)
+        if __name__ == "__main__":
+            main()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=formatted_text))  # 将动画信息传递给回复消息的函数
     else:
         print("Other message received: " + event.message.text)
