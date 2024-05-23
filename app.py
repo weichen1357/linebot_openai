@@ -13,6 +13,7 @@ import random
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from googletrans import Translator
+from linebot.models import TextSendMessage
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
