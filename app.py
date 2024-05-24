@@ -34,14 +34,9 @@ def scrape_anime_info():
             print(f'請求成功: {response.status_code}')
 
             soup = BeautifulSoup(response.text, 'html.parser')
-            newanime_item = soup.select_one('.timeline-ver > .newanime-block')
-            if not newanime_item:
-                print('未找到動畫區塊')
-                return anime_list
+            newanime_items = soup.select('.timeline-ver > .newanime-block > .newanime-date-area:not(.premium-block)')
 
-            anime_items = newanime_item.select('.newanime-date-area:not(.premium-block)')
-
-            for anime_item in anime_items:
+            for anime_item in newanime_items:
                 anime_info = {}
                 name_tag = anime_item.select_one('.anime-name > p')
                 watch_number_tag = anime_item.select_one('.anime-watch-number > p')
