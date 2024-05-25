@@ -13,16 +13,6 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
-def get_headers():
-    user_agents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
-    ]
-    headers = {'User-Agent': random.choice(user_agents)}
-    return headers
-
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers.get('X-Line-Signature')
@@ -60,42 +50,56 @@ def handle_message(event):
                 newanime_item = soup.select_one('.timeline-ver > .newanime-block')
                 if not newanime_item:
                     print('未找到動畫區塊')
-                    return anime_list
+                    reply_message = "未找到動畫區塊"
+                else:
+                    anime_items = newanime_item.select('.newanime-date-area:not(.premium-block)')
 
-                anime_items = newanime_item.select('.newanime-date-area:not(.premium-block)')
+                    for anime_item in anime_items:
+                        anime_info = {}
+                        name_tag = anime_item.select_one('.anime-name > p')
+                        watch_number_tag = anime_item.select_one('.anime-watch-number > p')
+                        episode_tag = anime_item.select_one('.anime-episode')
+                        link_tag = anime_item.select_one('a.anime-card-block')
 
-                for anime_item in anime_items:
-                    anime_info = {}
-                    name_tag = anime_item.select_one('.anime-name > p')
-                    watch_number_tag = anime_item.select_one('.anime-watch-number > p')
-                    episode_tag = anime_item.select_one('.anime-episode')
-                    link_tag = anime_item.select_one('a.anime-card-block')
+                        if name_tag and watch_number_tag and episode_tag and link_tag:
+                            anime_info['name'] = name_tag.text.strip()
+                            anime_info['watch_number'] = watch_number_tag.text.strip()
+                            anime_info['episode'] = episode_tag.text.strip()
+                            anime_info['link'] = "https://ani.gamer.com.tw/" + link_tag.get('href')
+                            anime_list.append(anime_info)
 
-                    if name_tag and watch_number_tag and episode_tag and link_tag:
-                        anime_info['name'] = name_tag.text.strip()
-                        anime_info['watch_number'] = watch_number_tag.text.strip()
-                        anime_info['episode'] = episode_tag.text.strip()
-                        anime_info['link'] = "https://ani.gamer.com.tw/" + link_tag.get('href')
-                        anime_list.append(anime_info)
+                    formatted_text = "@使用者 您好(你好)\n揭曉今天播放次數最高的動畫排行榜 !\n\n"
+                    for i, anime in enumerate(anime_list, start=1):
+                        formatted_text += f"{i}.{anime['name']}\n"
+                        formatted_text += f"   集數:{anime['episode']}\n"
+                        formatted_text += f"   觀看次數:{int(anime['watch_number'])}\n"
+                        formatted_text += f"   點我馬上看:{anime['link']}\n\n"
+                    reply_message = formatted_text.strip()
 
             else:
                 print(f'請求失敗: {response.status_code}')
+                reply_message = "請求失敗，請稍後再試"
         except requests.RequestException as e:
             print(f"請求錯誤: {e}")
+            reply_message = "請求錯誤，請稍後再試"
         except Exception as e:
             print(f"未知錯誤: {e}")
+            reply_message = "發生未知錯誤，請稍後再試"
 
-        formatted_text = "@使用者 您好(你好)\n揭曉今天播放次數最高的動畫排行榜 !\n\n"
-        for i, anime in enumerate(anime_list, start=1):
-            formatted_text += f"({i}) {anime['name']}\n"
-            formatted_text += f"集數: {anime['episode']}\n"
-            formatted_text += f"觀看次數: {int(anime['watch_number'])}\n"
-            formatted_text += f"點我馬上看: {anime['link']}\n\n"
-        
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=formatted_text.strip())
+            TextSendMessage(text=reply_message)
         )
+
+def get_headers():
+    user_agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+    ]
+    headers = {'User-Agent': random.choice(user_agents)}
+    return headers
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
