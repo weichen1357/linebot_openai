@@ -108,9 +108,6 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
-
-
-@app.route("/crawl_anime_events", methods=['GET'])
 def crawl_anime_events():
     url = "https://www.e-muse.com.tw/zh/news/latest-news/events/"
 
@@ -133,7 +130,7 @@ def crawl_anime_events():
                 # 提取了解更多:href
                 learn_more_link = item['href']
 
-                # 格式化输出信息，使用TemplateMessage添加超链接
+                # 格式化输出信息
                 message += f"{index}. 『{title_text}』\n時間: {time_text}\n點我了解更多:\n{learn_more_link}\n"
 
             return message
@@ -141,6 +138,7 @@ def crawl_anime_events():
             return "無法獲取資料"
     except Exception as e:
         return "發生錯誤: " + str(e)
+
 
 # anime_ranking.py
 def get_headers():
@@ -284,12 +282,10 @@ def handle_message(event):
     elif event.message.text == "A：動漫":
         print("A：動漫 button clicked")
         anime_events_info = crawl_anime_events()
-        message = message.replace("點我了解更多", '<a href="https://www.e-muse.com.tw/zh/news/latest-news/events/">了解更多</a>')
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=message, parse_mode="HTML")
+            TextSendMessage(text=f"@{user_name} 您好，{anime_events_info}")
         )
-
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
