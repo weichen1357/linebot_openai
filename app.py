@@ -108,10 +108,8 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
-
 def crawl_anime_events():
     url = "https://www.e-muse.com.tw/zh/news/latest-news/events/"
-    events = []
 
     try:
         response = requests.get(url)
@@ -119,86 +117,27 @@ def crawl_anime_events():
             soup = BeautifulSoup(response.text, 'html.parser')
             news_items = soup.find_all(class_="item article_item sr_bottom")
 
-            for item in news_items[:5]:  # 只获取前五个活动
-                event = {}
-
-                # 提取标题
+            message = "以下是近期Anime動漫展的資訊:\n"
+            for index, item in enumerate(news_items, start=1):
+                # 提取title txt-bold
                 title_element = item.find(class_="title")
-                event['title'] = title_element.get_text(strip=True) if title_element else "無標題"
+                title_text = title_element.get_text(strip=True)
 
-                # 提取时间
+                # 提取時間:date
                 time_element = item.find(class_="date")
-                event['time'] = time_element.find(class_="txt-semibold").get_text(strip=True) if time_element else "無時間"
+                time_text = time_element.find(class_="txt-semibold").get_text(strip=True)
 
-                # 提取了解更多链接
-                learn_more_link = item.find("a")['href']
-                event['link'] = learn_more_link
+                # 提取了解更多:href
+                learn_more_link = item['href']
 
-                # 提取图片URL
-                figure_element = item.find('figure')
-                if figure_element:
-                    style_attr = figure_element.get('style')
-                    if style_attr:
-                        image_url = style_attr.split('url(')[1].split(')')[0]
-                        event['image'] = image_url
+                # 格式化输出信息
+                message += f"{index}.  『{title_text}』\n時間: {time_text}\n點我了解更多:\n {learn_more_link}\n"
 
-                events.append(event)
+            return message
+        else:
+            return "無法獲取資料"
     except Exception as e:
-        print("發生錯誤:", str(e))
-
-    return events
-
-def format_flex_message(events):
-    bubbles = []
-    for event in events:
-        bubble = BubbleContainer(
-            direction='ltr',
-            hero=ImageComponent(
-                url=event['image'],
-                size='full',
-                aspect_ratio='20:13',
-                aspect_mode='cover'
-            ),
-            body=BoxComponent(
-                layout='vertical',
-                contents=[
-                    TextComponent(text=event['title'], weight='bold', size='xl'),
-                    BoxComponent(
-                        layout='vertical',
-                        margin='lg',
-                        spacing='sm',
-                        contents=[
-                            BoxComponent(
-                                layout='baseline',
-                                spacing='sm',
-                                contents=[
-                                    TextComponent(text='時間', color='#aaaaaa', size='sm', flex=1),
-                                    TextComponent(text=event['time'], wrap=True, color='#666666', size='sm', flex=5)
-                                ]
-                            )
-                        ]
-                    )
-                ]
-            ),
-            footer=BoxComponent(
-                layout='vertical',
-                spacing='sm',
-                contents=[
-                    ButtonComponent(
-                        style='link',
-                        height='sm',
-                        action=URIAction(label='了解更多', uri=event['link'])
-                    )
-                ]
-            )
-        )
-        bubbles.append(bubble)
-
-    flex_message = FlexSendMessage(
-        alt_text="近期Anime動漫展的資訊",
-        contents=CarouselContainer(contents=bubbles)
-    )
-    return flex_message
+        return "發生錯誤: " + str(e)
 
 
 # anime_ranking.py
@@ -340,15 +279,14 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text.lower() == "A:動漫":
-        events = crawl_anime_events()
-        if events:
-            flex_message = format_flex_message(events)
-            line_bot_api.reply_message(event.reply_token, flex_message)
-        else:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="無法獲取近期Anime動漫展的資訊。"))
+    elif event.message.text == "A：動漫":
+        print("A：動漫 button clicked")
+        anime_events_info = crawl_anime_events()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=f"@{user_name} 您好，{anime_events_info}")
+        )
+
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
         reply_message = TextSendMessage(
