@@ -163,7 +163,7 @@ def generate_anime_event_carousel(events_info):
                         contents=[
                             TextComponent(text=f'活動日期: {event_info["time"]}', size='md'),
                             SeparatorComponent(color='#CCCCCC',margin='lg'),
-                            TextComponent(text='\n點我了解更多唷!', size='md', color='#0084B6', align='center' ,action=URIAction(uri=event_info['learn_more_link'], label='了解更多'))
+                            TextComponent(text='\n點我了解更多唷!', size='md', color='#0084B6', align='center',margin='xl',action=URIAction(uri=event_info['learn_more_link'], label='了解更多'))
                         ]
                     )
                 ]
