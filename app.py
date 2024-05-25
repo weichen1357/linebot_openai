@@ -108,18 +108,7 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
-@app.route("/callback", methods=['POST'])
-def callback():
-    signature = request.headers.get('X-Line-Signature')
-    body = request.get_data(as_text=True)
-    app.logger.info("Signature: " + signature)
-    app.logger.info("Request body: " + body)
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        app.logger.error("Invalid signature. Check your channel access token/channel secret.")
-        abort(400)
-    return 'OK'
+
 
 @app.route("/crawl_anime_events", methods=['GET'])
 def crawl_anime_events():
