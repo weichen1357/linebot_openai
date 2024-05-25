@@ -108,6 +108,20 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
+@app.route("/callback", methods=['POST'])
+def callback():
+    signature = request.headers.get('X-Line-Signature')
+    body = request.get_data(as_text=True)
+    app.logger.info("Signature: " + signature)
+    app.logger.info("Request body: " + body)
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        app.logger.error("Invalid signature. Check your channel access token/channel secret.")
+        abort(400)
+    return 'OK'
+
+@app.route("/crawl_anime_events", methods=['GET'])
 def crawl_anime_events():
     url = "https://www.e-muse.com.tw/zh/news/latest-news/events/"
 
@@ -117,7 +131,7 @@ def crawl_anime_events():
             soup = BeautifulSoup(response.text, 'html.parser')
             news_items = soup.find_all(class_="item article_item sr_bottom")
 
-            message = "以下是近期Anime動漫展的資訊:\n"
+            message = "以下是近期Anime動漫展的資訊:\n\n"
             for index, item in enumerate(news_items, start=1):
                 # 提取title txt-bold
                 title_element = item.find(class_="title")
@@ -130,15 +144,14 @@ def crawl_anime_events():
                 # 提取了解更多:href
                 learn_more_link = item['href']
 
-                # 格式化输出信息
-                message += f"{index}.  『{title_text}』\n時間: {time_text}\n點我了解更多:\n {learn_more_link}\n"
+                # 格式化输出信息，使用TemplateMessage添加超链接
+                message += f"{index}. 『{title_text}』\n時間: {time_text}\n點我了解更多:\n{learn_more_link}\n"
 
             return message
         else:
             return "無法獲取資料"
     except Exception as e:
         return "發生錯誤: " + str(e)
-
 
 # anime_ranking.py
 def get_headers():
@@ -282,10 +295,12 @@ def handle_message(event):
     elif event.message.text == "A：動漫":
         print("A：動漫 button clicked")
         anime_events_info = crawl_anime_events()
+        message = message.replace("點我了解更多", '<a href="https://www.e-muse.com.tw/zh/news/latest-news/events/">了解更多</a>')
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=f"@{user_name} 您好，{anime_events_info}")
+            TextSendMessage(text=message, parse_mode="HTML")
         )
+
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
