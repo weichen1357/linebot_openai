@@ -191,17 +191,7 @@ def get_anime_ranking(user_name):
     formatted_text = format_anime_info(anime_list, user_name)
     return formatted_text
 # 在 main 函数中调用 scrape_anime_info 函数
-def main():
-    anime_list = scrape_anime_info()
-    anime_list = convert_watch_number(anime_list)
-    anime_list = aggregate_anime_info(anime_list)
-    anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
 
-    formatted_text = format_anime_info(anime_list)
-    print(formatted_text)
-
-if __name__ == "__main__":
-    main()
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -435,9 +425,13 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     elif event.message.text == "播放排行榜":
         print("播放排行榜 button clicked")
-        ranking_text = get_anime_ranking(user_name)
-        reply_message = TextSendMessage(text=ranking_text)
-        line_bot_api.reply_message(event.reply_token, reply_message)
+        anime_list = scrape_anime_info()
+        anime_list = convert_watch_number(anime_list)
+        anime_list = aggregate_anime_info(anime_list)
+        anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
+
+        formatted_text = format_anime_info(anime_list)
+        line_bot_api.reply_message(event.reply_token, formatted_text)
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？🤔"))
