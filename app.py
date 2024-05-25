@@ -440,7 +440,7 @@ def handle_message(event):
         anime_list = aggregate_anime_info(anime_list)
         anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
         formatted_text = format_anime_info(anime_list, user_name)
-        line_bot_api.reply_message(event.reply_token, formatted_text)
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text = formatted_text))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？🤔"))
