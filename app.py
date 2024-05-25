@@ -117,9 +117,6 @@ def handle_message(event):
     user_id = event.source.user_id
     print(f"Received message from {user_name}: {event.message.text}")
 
-    if user_id not in user_data:
-        user_data[user_id] = {'category': None, 'seen': [], 'count': 0, 'year': None}
-
     if event.message.text == "播放排行榜":
         anime_rankings = get_anime_rankings()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=anime_rankings))
