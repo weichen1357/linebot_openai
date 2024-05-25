@@ -108,67 +108,71 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
-def crawl_anime_events():
+def scrape_anime_events_with_images():
     url = "https://www.e-muse.com.tw/zh/news/latest-news/events/"
-
     try:
         response = requests.get(url)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             news_items = soup.find_all(class_="item article_item sr_bottom")
-
-            bubbles = []
+            events_info = []
             for item in news_items:
-                # 提取 title
                 title_element = item.find(class_="title")
                 title_text = title_element.get_text(strip=True)
-
-                # 提取時間
                 time_element = item.find(class_="date")
                 time_text = time_element.find(class_="txt-semibold").get_text(strip=True)
-
-                # 提取了解更多的 href
                 learn_more_link = item['href']
-
-                # 提取圖片URL
                 figure_element = item.find('figure')
+                image_url = None
                 if figure_element:
                     style_attr = figure_element.get('style')
                     if style_attr:
                         image_url = style_attr.split('url(')[1].split(')')[0]
+                event_info = {
+                    'title': title_text,
+                    'time': time_text,
+                    'learn_more_link': learn_more_link,
+                    'image_url': image_url
+                }
+                events_info.append(event_info)
+            return events_info
+        else:
+            return None
+    except Exception as e:
+        print("Error scraping anime events:", e)
+        return None
 
-                # 创建 Bubble
-                bubble = BubbleContainer(
-                    direction='ltr',
-                    body=BoxComponent(
+def generate_anime_event_carousel(events_info):
+    bubbles = []
+    for event_info in events_info:
+        bubble = BubbleContainer(
+            direction='ltr',
+            hero=ImageComponent(
+                url=event_info['image_url'] if event_info['image_url'] else 'https://example.com/default_image.jpg',
+                size='full',
+                aspect_ratio='20:13',
+                aspect_mode='cover'
+            ),
+            body=BoxComponent(
+                layout='vertical',
+                contents=[
+                    TextComponent(text=event_info['title'], weight='bold', size='xl'),
+                    BoxComponent(
                         layout='vertical',
+                        margin='lg',
                         contents=[
-                            TextComponent(text=title_text, weight='bold', size='lg'),
-                            TextComponent(text=time_text, size='sm', margin='md'),
-                            BoxComponent(
-                                layout='vertical',
-                                margin='md',
-                                contents=[
-                                    TextComponent(text='了解更多:', size='sm', color='#0000FF'),
-                                    TextComponent(text=learn_more_link, size='xs', color='#0000FF', wrap=True)
-                                ]
-                            )
-                        ]
-                    ),
-                    footer=BoxComponent(
-                        layout='horizontal',
-                        contents=[
-                            ImageComponent(url=image_url, size='xl', aspect_ratio='1:1', aspect_mode='cover')
+                            TextComponent(text=event_info['time'], size='md'),
+                            TextComponent(text='了解更多', size='md', color='#0084B6', action=URIAction(uri=event_info['learn_more_link'], label='了解更多'))
                         ]
                     )
-                )
-                bubbles.append(bubble)
+                ]
+            )
+        )
+        bubbles.append(bubble)
+    
+    carousel = CarouselContainer(contents=bubbles)
+    return carousel
 
-            return FlexSendMessage(alt_text="Anime Events", contents=bubbles)
-        else:
-            return "無法獲取資料"
-    except Exception as e:
-        return "發生錯誤: " + str(e)
 
 # anime_ranking.py
 def get_headers():
@@ -310,9 +314,19 @@ def handle_message(event):
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "A：動漫":
-        print("A：動漫 button clicked")
-        anime_events_info = crawl_anime_events()
-        line_bot_api.reply_message(event.reply_token,anime_events_info)
+        print("A:動漫 button clicked")
+        anime_events_info = scrape_anime_events_with_images()
+        if anime_events_info:
+            carousel = generate_anime_event_carousel(anime_events_info)
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text="Anime展覽資訊", contents=carousel)
+            )
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="抱歉，無法獲取Anime動漫展的資訊。😢")
+            )
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
