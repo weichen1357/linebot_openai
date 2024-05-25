@@ -117,8 +117,8 @@ def crawl_anime_events():
             soup = BeautifulSoup(response.text, 'html.parser')
             news_items = soup.find_all(class_="item article_item sr_bottom")
 
-            message = "以下是近期Anime動漫展的資訊:\n\n"
-            for index, item in enumerate(news_items, start=1):
+            events_info = []
+            for item in news_items:
                 # 提取title txt-bold
                 title_element = item.find(class_="title")
                 title_text = title_element.get_text(strip=True)
@@ -130,15 +130,50 @@ def crawl_anime_events():
                 # 提取了解更多:href
                 learn_more_link = item['href']
 
-                # 格式化输出信息
-                message += f"{index}. 『{title_text}』\n時間: {time_text}\n點我了解更多:\n{learn_more_link}\n"
+                # 构建事件信息
+                event_info = {
+                    "title": title_text,
+                    "time": time_text,
+                    "learn_more_link": learn_more_link
+                }
+                events_info.append(event_info)
 
-            return message
+            return events_info
         else:
-            return "無法獲取資料"
+            return None
     except Exception as e:
-        return "發生錯誤: " + str(e)
-
+        print("Error fetching anime events:", e)
+        return None
+def generate_anime_event_carousel(events_info):
+    bubbles = []
+    for event_info in events_info:
+        bubble = BubbleContainer(
+            direction='ltr',
+            hero=ImageComponent(
+                url='https://example.com/event.jpg',  # 这里替换成你想要展示的图片链接
+                size='full',
+                aspect_ratio='20:13',
+                aspect_mode='cover'
+            ),
+            body=BoxComponent(
+                layout='vertical',
+                contents=[
+                    TextComponent(text=event_info['title'], weight='bold', size='xl'),
+                    BoxComponent(
+                        layout='vertical',
+                        margin='lg',
+                        contents=[
+                            TextComponent(text=event_info['time'], size='md'),
+                            TextComponent(text='了解更多', size='md', color='#0084B6', action=URIAction(uri=event_info['learn_more_link'], label='了解更多'))
+                        ]
+                    )
+                ]
+            )
+        )
+        bubbles.append(bubble)
+    
+    carousel = CarouselContainer(contents=bubbles)
+    return carousel
 
 # anime_ranking.py
 def get_headers():
@@ -279,13 +314,20 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "A：動漫":
-        print("A：動漫 button clicked")
+    elif event.message.text == "A:動漫":
+        print("A:動漫 button clicked")
         anime_events_info = crawl_anime_events()
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=f"@{user_name} 您好，{anime_events_info}")
-        )
+        if anime_events_info:
+            carousel = generate_anime_event_carousel(anime_events_info)
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text="Anime展覽資訊", contents=carousel)
+            )
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="抱歉，無法獲取Anime動漫展的資訊。😢")
+            )
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
