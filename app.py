@@ -191,7 +191,17 @@ def get_anime_ranking(user_name):
     formatted_text = format_anime_info(anime_list, user_name)
     return formatted_text
 # 在 main 函数中调用 scrape_anime_info 函数
+def main():
+    anime_list = scrape_anime_info()
+    anime_list = convert_watch_number(anime_list)
+    anime_list = aggregate_anime_info(anime_list)
+    anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
 
+    formatted_text = format_anime_info(anime_list)
+    print(formatted_text)
+
+if __name__ == "__main__":
+    main()
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -429,8 +439,7 @@ def handle_message(event):
         anime_list = convert_watch_number(anime_list)
         anime_list = aggregate_anime_info(anime_list)
         anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
-
-        formatted_text = format_anime_info(anime_list)
+        formatted_text = format_anime_info(anime_list, user_name)
         line_bot_api.reply_message(event.reply_token, formatted_text)
     else:
         print("Other message received: " + event.message.text)
