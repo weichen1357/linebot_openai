@@ -109,27 +109,42 @@ def scrape_anime_season(url):
         anime_list.append(anime_dict)
     return anime_list
 def scrape_emuse():
-    options = webdriver.ChromeOptions()
-    service = ChromeService(executable_path="chromedriver.exe")
-    driver = webdriver.Chrome(service=service, options=options)
-
+    url = "https://www.e-muse.com.tw/zh/news/latest-news/events/"
     try:
-        driver.get("https://www.e-muse.com.tw/zh/news/latest-news/events/") 
-        driver.maximize_window()
-        time.sleep(3) 
-        class_name = "item_inner"
-        index = 3  
-        driver.execute_script(f"document.querySelectorAll('.{class_name}')[{index}].scrollIntoView();")
+        response = requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            news_items = soup.find_all(class_="item article_item sr_bottom")
+            
+            info_list = []
+            for item in news_items:
+                # 提取title txt-bold
+                title_element = item.find(class_="title")
+                title_text = title_element.get_text(strip=True)
 
-        table_element = driver.find_element(By.CLASS_NAME, "itembox")
-        table_text = table_element.text
+                # 提取時間:date
+                time_element = item.find(class_="date")
+                time_text = time_element.find(class_="txt-semibold").get_text(strip=True)
 
-        return table_text
+                # 提取了解更多:href
+                learn_more_link = item['href']
+                
+                # 构建信息字典并添加到列表
+                info = {
+                    "title": title_text,
+                    "time": time_text,
+                    "learn_more_link": learn_more_link
+                }
+                info_list.append(info)
+
+            return info_list
+        else:
+            print("请求失败:", response.status_code)
+            return []
     except Exception as e:
         print("爬取失败:", str(e))
-        return "抱歉，无法获取信息。"
-    finally:
-        driver.quit()
+        return []
+
 
 # anime_ranking.py
 def get_headers():
@@ -273,8 +288,14 @@ def handle_message(event):
     elif event.message.text == "A：動漫":
         print("A：動漫 button clicked")
         emuse_info = scrape_emuse()
-        reply_message = TextSendMessage(text="以下是近期Anime動漫展的資訊:\n\n" + emuse_info)
-        line_bot_api.reply_message(event.reply_token, reply_message)
+        if emuse_info:
+            reply_message = TextSendMessage(text="以下是近期Anime動漫展的資訊:\n\n")
+            for info in emuse_info:
+                message = f"標題: {info['title']}\n時間: {info['time']}\n了解更多: {info['learn_more_link']}\n\n"
+                reply_message += TextSendMessage(text=message)
+            line_bot_api.reply_message(event.reply_token, reply_message)
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取資訊。"))
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
