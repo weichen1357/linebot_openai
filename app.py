@@ -90,28 +90,12 @@ def format_anime_info(anime_list):
         formatted_text += f"點我馬上看: {anime['link']}\n\n"
     return formatted_text.strip()
 
-def send_message_to_line(formatted_text):
-    line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
-    user_id = os.getenv('USER_ID')
-    line_bot_api.push_message(user_id, TextSendMessage(text=formatted_text))
-
-def main():
-    print("開始爬蟲...")
+def get_anime_rankings():
     anime_list = scrape_anime_info()
-    print("原始資料: ", anime_list)
     anime_list = convert_watch_number(anime_list)
-    print("轉換後的資料: ", anime_list)
     anime_list = aggregate_anime_info(anime_list)
-    print("聚合後的資料: ", anime_list)
     anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
-    print("排序後的資料: ", anime_list)
-
-    formatted_text = format_anime_info(anime_list)
-    print("格式化的文本: ", formatted_text)
-    send_message_to_line(formatted_text)
-
-if __name__ == "__main__":
-    main()
+    return format_anime_info(anime_list)
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -139,13 +123,6 @@ def handle_message(event):
     if event.message.text == "播放排行榜":
         anime_rankings = get_anime_rankings()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=anime_rankings))
-
-def get_anime_rankings():
-    anime_list = scrape_anime_info()
-    anime_list = convert_watch_number(anime_list)
-    anime_list = aggregate_anime_info(anime_list)
-    anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
-    return format_anime_info(anime_list)
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
