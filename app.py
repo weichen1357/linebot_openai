@@ -348,7 +348,7 @@ def handle_message(event):
         else:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="無法獲取近期Anime動漫展的資訊。")
+                TextSendMessage(text="無法獲取近期Anime動漫展的資訊。"))
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
         reply_message = TextSendMessage(
