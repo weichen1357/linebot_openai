@@ -108,16 +108,17 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
-def scrape_emuse():
+def crawl_anime_events():
     url = "https://www.e-muse.com.tw/zh/news/latest-news/events/"
+
     try:
         response = requests.get(url)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             news_items = soup.find_all(class_="item article_item sr_bottom")
-            
-            info_list = []
-            for item in news_items:
+
+            message = "以下是近期Anime動漫展的資訊:\n"
+            for index, item in enumerate(news_items, start=1):
                 # 提取title txt-bold
                 title_element = item.find(class_="title")
                 title_text = title_element.get_text(strip=True)
@@ -128,22 +129,15 @@ def scrape_emuse():
 
                 # 提取了解更多:href
                 learn_more_link = item['href']
-                
-                # 构建信息字典并添加到列表
-                info = {
-                    "title": title_text,
-                    "time": time_text,
-                    "learn_more_link": learn_more_link
-                }
-                info_list.append(info)
 
-            return info_list
+                # 格式化输出信息
+                message += f"{index}. 標題: {title_text}\n   時間: {time_text}\n   了解更多: {learn_more_link}\n"
+
+            return message
         else:
-            print("请求失败:", response.status_code)
-            return []
+            return "無法獲取資料"
     except Exception as e:
-        print("爬取失败:", str(e))
-        return []
+        return "發生錯誤: " + str(e)
 
 
 # anime_ranking.py
@@ -287,15 +281,11 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply_message)
     elif event.message.text == "A：動漫":
         print("A：動漫 button clicked")
-        emuse_info = scrape_emuse()
-        if emuse_info:
-            reply_message = TextSendMessage(text="以下是近期Anime動漫展的資訊:\n\n")
-            for info in emuse_info:
-                message = f"標題: {info['title']}\n時間: {info['time']}\n了解更多: {info['learn_more_link']}\n\n"
-                reply_message += TextSendMessage(text=message)
-            line_bot_api.reply_message(event.reply_token, reply_message)
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取資訊。"))
+        anime_events_info = crawl_anime_events()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=f"@{user_name} 您好，{anime_events_info}")
+        )
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
