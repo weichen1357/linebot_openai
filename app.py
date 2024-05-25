@@ -314,7 +314,7 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-    elif event.message.text == "A:動漫":
+    elif event.message.text == "A：動漫":
         print("A:動漫 button clicked")
         anime_events_info = crawl_anime_events()
         if anime_events_info:
