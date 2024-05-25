@@ -108,6 +108,29 @@ def scrape_anime_season(url):
 
         anime_list.append(anime_dict)
     return anime_list
+def scrape_emuse():
+    options = webdriver.ChromeOptions()
+    service = ChromeService(executable_path="chromedriver.exe")
+    driver = webdriver.Chrome(service=service, options=options)
+
+    try:
+        driver.get("https://www.e-muse.com.tw/zh/news/latest-news/events/") 
+        driver.maximize_window()
+        time.sleep(3) 
+        class_name = "item_inner"
+        index = 3  
+        driver.execute_script(f"document.querySelectorAll('.{class_name}')[{index}].scrollIntoView();")
+
+        table_element = driver.find_element(By.CLASS_NAME, "itembox")
+        table_text = table_element.text
+
+        return table_text
+    except Exception as e:
+        print("爬取失败:", str(e))
+        return "抱歉，无法获取信息。"
+    finally:
+        driver.quit()
+
 # anime_ranking.py
 def get_headers():
     user_agents = [
@@ -247,6 +270,12 @@ def handle_message(event):
             )
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
+    elif event.message.text == "A：動漫":
+        print("A：動漫 button clicked")
+        emuse_info = scrape_emuse()
+        reply_message = TextSendMessage(text="以下是近期Anime動漫展的資訊:\n\n" + emuse_info)
+        line_bot_api.reply_message(event.reply_token, reply_message)
+
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
         reply_message = TextSendMessage(
