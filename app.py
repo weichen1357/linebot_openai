@@ -34,9 +34,14 @@ def scrape_anime_info():
             print(f'請求成功: {response.status_code}')
 
             soup = BeautifulSoup(response.text, 'html.parser')
-            newanime_items = soup.select('.timeline-ver > .newanime-block > .newanime-date-area:not(.premium-block)')
+            newanime_item = soup.select_one('.timeline-ver > .newanime-block')
+            if not newanime_item:
+                print('未找到動畫區塊')
+                return anime_list
 
-            for anime_item in newanime_items:
+            anime_items = newanime_item.select('.newanime-date-area:not(.premium-block)')
+
+            for anime_item in anime_items:
                 anime_info = {}
                 name_tag = anime_item.select_one('.anime-name > p')
                 watch_number_tag = anime_item.select_one('.anime-watch-number > p')
@@ -84,7 +89,7 @@ def format_anime_info(anime_list):
         formatted_text += f"觀看次數: {int(anime['watch_number'])}\n"
         formatted_text += f"點我馬上看: {anime['link']}\n\n"
     return formatted_text.strip()
-
+    
 def get_anime_rankings():
     anime_list = scrape_anime_info()
     anime_list = convert_watch_number(anime_list)
@@ -113,7 +118,7 @@ def handle_message(event):
     print(f"Received message from {user_name}: {event.message.text}")
 
     if user_id not in user_data:
-        user_data[user_id] = {'category': None, 'seen': [], 'count': 0, 'year': None}  # 在 user_data 中添加 year 字段
+        user_data[user_id] = {'category': None, 'seen': [], 'count': 0, 'year': None}
 
     if event.message.text == "播放排行榜":
         anime_rankings = get_anime_rankings()
