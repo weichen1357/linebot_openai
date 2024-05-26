@@ -318,10 +318,11 @@ def handle_message(event):
         print("A:動漫 button clicked")
         anime_events_info = scrape_anime_events_with_images()
         if anime_events_info:
+            greeting_message = TextSendMessage(text=f"@{user_name} 您好，以下是近期Anime動漫展的資訊")
             carousel = generate_anime_event_carousel(anime_events_info)
             line_bot_api.reply_message(
-                event.reply_token,
-                FlexSendMessage(alt_text="Anime展覽資訊", contents=carousel)
+                event.reply_token,[greeting_message ,
+                FlexSendMessage(alt_text="Anime展覽資訊", contents=carousel)]
             )
         else:
             line_bot_api.reply_message(
