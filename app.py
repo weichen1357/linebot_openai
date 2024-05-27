@@ -36,7 +36,7 @@ def fetch_game_expo_info():
             news_url = "https://tgs.tca.org.tw/" + news_link['href']
             date_text = news_span.find_next_sibling('span').text.strip()
 
-            message += f"{index}. 标题: {news_title}\n链接: {news_url}\n日期: {date_text}\n\n"
+            message += f"{index}. {news_title}\n了解更多:\nhttps://tgs.tca.org.tw/{news_url}\n日期: {date_text}\n\n"
 
         return message
     else:
@@ -336,7 +336,7 @@ def handle_message(event):
         message = fetch_comic_info()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
 
-   elif event.message.text == "G：電玩":
+    elif event.message.text == "G：電玩":
         game_expo_info = fetch_game_expo_info()
         line_bot_api.reply_message(
             event.reply_token,
