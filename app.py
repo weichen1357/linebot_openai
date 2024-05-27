@@ -309,7 +309,7 @@ def handle_message(event):
             event.reply_token,
             TextSendMessage(text=f"@{user_name} 您好，{anime_events_info}")
         )
-    elif text == "C：漫畫":
+    elif event.message.text == "C：漫畫":
         message = fetch_comic_info()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
 
