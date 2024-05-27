@@ -21,6 +21,7 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
+# 网站爬取函数
 def scrape_website():
     url = 'https://tgs.tca.org.tw/news_list.php?a=2&b=c'
     response = requests.get(url)
@@ -28,6 +29,7 @@ def scrape_website():
         soup = BeautifulSoup(response.content, 'html.parser')
         news_spans = soup.find_all('span', class_='news_txt')
         messages = []
+        count = 0
         for news_span in news_spans:
             news_link = news_span.find('a')
             news_title = news_link.text.strip()
@@ -35,9 +37,13 @@ def scrape_website():
             date_text = news_span.find_next_sibling('span').text.strip()
             message = f"标题: {news_title}\n链接: {news_url}\n日期: {date_text}"
             messages.append(message)
-        return messages
+            count += 1
+            if count >= 5:
+                break
+        return messages if messages else ["未找到信息"]
     else:
         return ["无法访问网页"]
+
 
 def fetch_comic_info():
     url = 'https://www.ccpa.org.tw/comic/index.php?tpl=12'
