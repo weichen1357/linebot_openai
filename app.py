@@ -21,6 +21,24 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
+def scrape_website():
+    url = 'https://tgs.tca.org.tw/news_list.php?a=2&b=c'
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        news_spans = soup.find_all('span', class_='news_txt')
+        messages = []
+        for news_span in news_spans:
+            news_link = news_span.find('a')
+            news_title = news_link.text.strip()
+            news_url = news_link['href']
+            date_text = news_span.find_next_sibling('span').text.strip()
+            message = f"标题: {news_title}\n链接: {news_url}\n日期: {date_text}"
+            messages.append(message)
+        return messages
+    else:
+        return ["无法访问网页"]
+
 def fetch_comic_info():
     url = 'https://www.ccpa.org.tw/comic/index.php?tpl=12'
     response = requests.get(url)
@@ -312,6 +330,11 @@ def handle_message(event):
     elif event.message.text == "C：漫畫":
         message = fetch_comic_info()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+
+    elif event.message.text == "爬取网站信息":
+        messages = scrape_website()
+        for message in messages:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
