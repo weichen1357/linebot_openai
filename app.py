@@ -21,28 +21,7 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
-# 网站爬取函数
-def scrape_website():
-    url = 'https://tgs.tca.org.tw/news_list.php?a=2&b=c'
-    response = requests.get(url)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.content, 'html.parser')
-        news_spans = soup.find_all('span', class_='news_txt')
-        messages = []
-        count = 0
-        for news_span in news_spans:
-            news_link = news_span.find('a')
-            news_title = news_link.text.strip()
-            news_url = news_link['href']
-            date_text = news_span.find_next_sibling('span').text.strip()
-            message = f"标题: {news_title}\n链接: https://tgs.tca.org.tw/{news_url}\n日期: {date_text}"
-            messages.append(message)
-            count += 1
-            if count >= 5:
-                break
-        return messages if messages else ["未找到信息"]
-    else:
-        return ["无法访问网页"]
+
 
 
 def fetch_comic_info():
@@ -337,10 +316,7 @@ def handle_message(event):
         message = fetch_comic_info()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
 
-    elif event.message.text == "G：電玩":
-        messages = scrape_website()
-        for message in messages:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+   
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
