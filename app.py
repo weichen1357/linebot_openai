@@ -29,7 +29,7 @@ def fetch_comic_info():
         soup = BeautifulSoup(response.content, 'html.parser')
         target_divs = soup.find_all('div', class_='col-12 col-sm-6 col-md-6', style='padding:0 0 50px 0')
 
-        message = "以下是最新的漫畫資訊📚:\n\n"
+        message = "以下是近期的Comics漫畫展的資訊📚:\n\n"
         for index, div in enumerate(target_divs[:5]):
             title_tag = div.find('span', class_='rwd_font_navi_type3_2')
             title = title_tag.text if title_tag else 'N/A'
@@ -309,6 +309,9 @@ def handle_message(event):
             event.reply_token,
             TextSendMessage(text=f"@{user_name} 您好，{anime_events_info}")
         )
+    elif text == "C：漫畫":
+        message = fetch_comic_info()
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
