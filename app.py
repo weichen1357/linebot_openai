@@ -35,7 +35,7 @@ def scrape_website():
             news_title = news_link.text.strip()
             news_url = news_link['href']
             date_text = news_span.find_next_sibling('span').text.strip()
-            message = f"标题: {news_title}\n链接: {news_url}\n日期: {date_text}"
+            message = f"标题: {news_title}\n链接: https://tgs.tca.org.tw/{news_url}\n日期: {date_text}"
             messages.append(message)
             count += 1
             if count >= 5:
