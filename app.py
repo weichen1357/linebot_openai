@@ -331,7 +331,7 @@ def handle_message(event):
         message = fetch_comic_info()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
 
-    elif event.message.text == "爬取网站信息":
+    elif event.message.text == "G：電玩":
         messages = scrape_website()
         for message in messages:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
