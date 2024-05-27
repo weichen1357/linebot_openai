@@ -117,7 +117,7 @@ def crawl_anime_events():
             soup = BeautifulSoup(response.text, 'html.parser')
             news_items = soup.find_all(class_="item article_item sr_bottom")
 
-            message = "以下是近期Anime動漫展的資訊:\n\n"
+            message = "以下是近期Anime動漫展的資訊🎉:\n\n"
             for index, item in enumerate(news_items, start=1):
                 # 提取title txt-bold
                 title_element = item.find(class_="title")
@@ -131,7 +131,7 @@ def crawl_anime_events():
                 learn_more_link = item['href']
 
                 # 格式化输出信息
-                message += f"{index}. 『{title_text}』\n時間: {time_text}\n點我了解更多:\n{learn_more_link}\n"
+                message += f"{index}. 『{title_text}』\n🗓時間: {time_text}\n🔗點我了解更多:\n{learn_more_link}\n"
 
             return message
         else:
