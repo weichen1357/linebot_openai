@@ -21,6 +21,29 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
+def fetch_comic_info():
+    url = 'https://www.ccpa.org.tw/comic/index.php?tpl=12'
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        target_divs = soup.find_all('div', class_='col-12 col-sm-6 col-md-6', style='padding:0 0 50px 0')
+
+        message = "以下是最新的漫畫資訊📚:\n\n"
+        for index, div in enumerate(target_divs[:5]):
+            title_tag = div.find('span', class_='rwd_font_navi_type3_2')
+            title = title_tag.text if title_tag else 'N/A'
+
+            info_spans = div.find_all('span', class_='rwd_font_navi_type3_1')
+            date = info_spans[0].text if len(info_spans) > 0 else 'N/A'
+            publisher = info_spans[1].text if len(info_spans) > 1 else 'N/A'
+
+            message += f"{index + 1}. 標題: {title}\n日期: {date}\n出版社: {publisher}\n\n"
+        
+        return message
+    else:
+        return f'無法獲取網頁內容。狀態碼: {response.status_code}'
+
 def fetch_csv_data(url):
     try:
         response = requests.get(url)
