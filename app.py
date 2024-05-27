@@ -35,9 +35,7 @@ def fetch_game_expo_info():
             news_title = news_link.text.strip()
             news_url = "https://tgs.tca.org.tw/" + news_link['href']
             date_text = news_span.find_next_sibling('span').text.strip()
-
-            message += f"{index}. {news_title}\n了解更多:\nhttps://tgs.tca.org.tw/{news_url}\n日期: {date_text}\n\n"
-
+            message = f"📰 {news_title}\n📅日期: {date_text}\n了解更多: https://tgs.tca.org.tw/{news_url}\n\n"
         return message
     else:
         return f'无法访问网页。状态码: {response.status_code}'
