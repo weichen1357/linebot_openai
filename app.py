@@ -21,6 +21,26 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
+def fetch_game_expo_info():
+    url = 'https://tgs.tca.org.tw/news_list.php?a=2&b=c'
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        news_spans = soup.find_all('span', class_='news_txt')
+
+        message = "以下是近期Games電玩展覽的資訊🎮:\n\n"
+        for index, news_span in enumerate(news_spans[:5], start=1):
+            news_link = news_span.find('a')
+            news_title = news_link.text.strip()
+            news_url = "https://tgs.tca.org.tw/" + news_link['href']
+            date_text = news_span.find_next_sibling('span').text.strip()
+
+            message += f"{index}. 标题: {news_title}\n链接: {news_url}\n日期: {date_text}\n\n"
+
+        return message
+    else:
+        return f'无法访问网页。状态码: {response.status_code}'
 
 
 
@@ -316,7 +336,12 @@ def handle_message(event):
         message = fetch_comic_info()
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
 
-   
+   elif event.message.text == "G：電玩":
+        game_expo_info = fetch_game_expo_info()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=game_expo_info)
+        )
 
     elif event.message.text == "愛看啥類別":
         print("愛看啥類別 button clicked")
