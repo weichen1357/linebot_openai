@@ -38,7 +38,7 @@ def fetch_comic_info():
             date = info_spans[0].text if len(info_spans) > 0 else 'N/A'
             publisher = info_spans[1].text if len(info_spans) > 1 else 'N/A'
 
-            message += f"{index + 1}. 標題: {title}\n日期: {date}\n出版社: {publisher}\n\n"
+            message += f"{index + 1}.📝 {title}\n📅 日期: {date}\n🏢 出版社: {publisher}\n\n"
         
         return message
     else:
