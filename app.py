@@ -20,6 +20,73 @@ line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
+def scrape_anime_info():
+    anime_list = []
+    url = 'https://ani.gamer.com.tw/'
+    try:
+        response = requests.get(url, headers=get_headers(), timeout=10)
+        response.encoding = 'utf-8'
+
+        if response.status_code == 200:
+            print(f'請求成功: {response.status_code}')
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+            newanime_item = soup.select_one('.timeline-ver > .newanime-block')
+            if not newanime_item:
+                print('未找到動畫區塊')
+                return anime_list
+
+            anime_items = newanime_item.select('.newanime-date-area:not(.premium-block)')
+
+            for anime_item in anime_items:
+                anime_info = {}
+                name_tag = anime_item.select_one('.anime-name > p')
+                watch_number_tag = anime_item.select_one('.anime-watch-number > p')
+                episode_tag = anime_item.select_one('.anime-episode')
+                link_tag = anime_item.select_one('a.anime-card-block')
+
+                if name_tag and watch_number_tag and episode_tag and link_tag:
+                    anime_info['name'] = name_tag.text.strip()
+                    anime_info['watch_number'] = watch_number_tag.text.strip()
+                    anime_info['episode'] = episode_tag.text.strip()
+                    anime_info['link'] = "https://ani.gamer.com.tw/" + link_tag.get('href')
+                    anime_list.append(anime_info)
+
+        else:
+            print(f'請求失敗: {response.status_code}')
+    except requests.RequestException as e:
+        print(f"請求錯誤: {e}")
+    except Exception as e:
+        print(f"未知錯誤: {e}")
+    finally:
+        return anime_list
+    
+def convert_watch_number(anime_list):
+    for anime in anime_list:
+        if '萬' in anime['watch_number']:
+            anime['watch_number'] = float(anime['watch_number'].replace('萬', '')) * 10000
+        else:
+            anime['watch_number'] = int(anime['watch_number'])
+    return anime_list
+    
+def aggregate_anime_info(anime_list):
+    anime_dict = {}
+    for anime in anime_list:
+        if anime['name'] in anime_dict:
+            anime_dict[anime['name']]['watch_number'] += anime['watch_number']
+        else:
+            anime_dict[anime['name']] = anime
+    return list(anime_dict.values())
+
+def format_anime_info(anime_list):
+    formatted_text = "@使用者 您好(你好)\n揭曉今天播放次數最高的動畫排行榜 !\n\n"
+    for i, anime in enumerate(anime_list, start=1):
+        formatted_text += f"({i}) {anime['name']}\n"
+        formatted_text += f"集數: {anime['episode']}\n"
+        formatted_text += f"觀看次數: {int(anime['watch_number'])}\n"
+        formatted_text += f"點我馬上看: {anime['link']}\n\n"
+    return formatted_text.strip()
+
 
 def fetch_game_expo_info():
     url = 'https://tgs.tca.org.tw/news_list.php?a=2&b=c'
@@ -435,7 +502,16 @@ def handle_message(event):
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     elif event.message.text == "播放排行榜":
-        print("播放排行榜 button clicked")
+        print("播放排行榜按鈕點擊")
+        # 調用網頁爬蟲函數並處理數據
+        anime_list = scrape_anime_info()
+        anime_list = convert_watch_number(anime_list)
+        anime_list = aggregate_anime_info(anime_list)
+        anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
+
+        # 格式化數據並將其作為回應發送給用戶
+        formatted_text = format_anime_info(anime_list)
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=formatted_text))
      
     else:
         print("Other message received: " + event.message.text)
