@@ -86,11 +86,15 @@ def fetch_comic_info():
             date = info_spans[0].text if len(info_spans) > 0 else 'N/A'
             publisher = info_spans[1].text if len(info_spans) > 1 else 'N/A'
 
-            message += f"{index + 1}.📝 {title}\n📅 日期: {date}\n🏢 出版社: {publisher}\n\n"
+            link_tag = div.find('a', class_='rwd_font_navi_type3_3')
+            link = urljoin(url, link_tag['href']) if link_tag and 'href' in link_tag.attrs else 'N/A'
+
+            message += f"{index + 1}.📝 {title}\n📅 日期: {date}\n🏢 出版社: {publisher}\n🔗 連結: {link}\n\n"
         
         return message
     else:
         return f'無法獲取網頁內容。狀態碼: {response.status_code}'
+
 
 def fetch_csv_data(url):
     try:
