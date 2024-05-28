@@ -21,6 +21,31 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
+def fetch_top_watched_anime():
+    csv_url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/anime_ranking.csv"
+    try:
+        response = requests.get(csv_url)
+        response.raise_for_status()  # 檢查是否有錯誤發生
+        csv_content = response.text
+
+        # 解析 CSV 檔案
+        csv_reader = csv.reader(csv_content.splitlines())
+        next(csv_reader)  # 跳過標題行
+        rows = [row for row in csv_reader if len(row) == 4]  # 避免空數據行
+
+        # 按照 "Watch Number" 排序，取前五高的動畫資訊
+        sorted_rows = sorted(rows, key=lambda x: float(x[1]), reverse=True)[:5]
+
+        message = "以下是 Watch Number 前五高的動畫排行榜📊:\n\n"
+        for index, row in enumerate(sorted_rows, start=1):
+            name, watch_number, episode, link = row
+            message += f"{index}. {name}\n👀 觀看人數: {watch_number}\n🎬 集數: {episode}\n🔗 連結: {link}\n\n"
+
+        return message
+    except requests.exceptions.RequestException as e:
+        print("Error fetching top watched anime:", e)
+        return None
+
 
 
 def fetch_game_expo_info():
@@ -436,8 +461,12 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, template_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
-   
-            
+    elif event.message.text == "播放排行榜":
+        top_watched_anime = fetch_top_watched_anime()
+        if top_watched_anime:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=top_watched_anime))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抓取動畫排行榜時出錯。請稍後再試。"))
      
     else:
         print("Other message received: " + event.message.text)
