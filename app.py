@@ -447,7 +447,7 @@ def handle_message(event):
                 column = CarouselColumn(
                     thumbnail_image_url=anime['image_url'],
                     title=anime['title'][:40],  # 標題最多40個字元
-                    text=f"評分: {anime.get('score', 'N/A')}\n上架時間: {anime.get('release_date', 'N/A')}",
+                    text=f"上架時間: {anime.get('release_date', 'N/A')}",
                     actions=[URIAction(label='觀看連結', uri=anime['link'])]
                 )
                 columns.append(column)
