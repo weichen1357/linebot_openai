@@ -436,17 +436,7 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, template_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
-    elif event.message.text == "播放排行榜":
-        print("播放排行榜按鈕點擊")
-        # 調用網頁爬蟲函數並處理數據
-        anime_list = scrape_anime_info()
-        anime_list = convert_watch_number(anime_list)
-        anime_list = aggregate_anime_info(anime_list)
-        anime_list = sorted(anime_list, key=lambda x: x['watch_number'], reverse=True)
-
-        # 格式化數據並將其作為回應發送給用戶
-        formatted_text = format_anime_info(anime_list)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=formatted_text))
+    
      
     else:
         print("Other message received: " + event.message.text)
