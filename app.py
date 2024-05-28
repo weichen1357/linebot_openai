@@ -29,9 +29,12 @@ def read_csv_file(file_path):
             data.append(row)
     return data
 
-def display_play_rankings(data, user_name):
-    message = f"@{user_name} 播放排行榜如下：\n\n"
-    for entry in data:
+def display_top_five_play_rankings(data, user_name):
+    sorted_data = sorted(data, key=lambda x: int(x['Watch Number']), reverse=True)
+    top_five = sorted_data[:5]
+
+    message = f"@{user_name} 播放排行榜中觀看次數最高的五個項目如下：\n\n"
+    for entry in top_five:
         message += f"Name: {entry['Name']}\n"
         message += f"Watch Number: {entry['Watch Number']}\n"
         message += f"Episode: {entry['Episode']}\n"
@@ -455,7 +458,7 @@ def handle_message(event):
     elif event.message.text == "播放排行榜":
         print("播放排行榜按鈕點擊")
         # 替换为你的CSV文件路径
-        file_path = 'https://github.com/weichen1357/linebot_openai/blob/master/2024-05-28_anime_rankings.csv'
+        file_path = 'https://raw.githubusercontent.com/weichen1357/linebot_openai/master/2024-05-28_anime_rankings.csv'
         data = read_csv_file(file_path)
         message = display_play_rankings(data, user_name)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
