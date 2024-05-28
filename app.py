@@ -86,9 +86,8 @@ def fetch_comic_info():
             date = info_spans[0].text if len(info_spans) > 0 else 'N/A'
             publisher = info_spans[1].text if len(info_spans) > 1 else 'N/A'
 
-            link_tag = div.find('a', class_='col-12 col-sm-6 col-md-6')
-            link = urljoin(url, link_tag['href']) if link_tag and 'href' in link_tag.attrs else 'N/A'
-
+            link_tag = div.find('a')
+            link = urljoin(url, link_tag['href']) if link_tag else 'N/A'
             message += f"{index + 1}.📝 {title}\n📅 日期: {date}\n🏢 出版社: {publisher}\n🔗 了解更多:\n{link}\n\n"
         
         return message
