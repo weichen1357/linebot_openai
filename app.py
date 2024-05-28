@@ -465,10 +465,9 @@ def handle_message(event):
         message, _ = display_top_five_play_rankings(read_csv_file(csv_file_path), "動漫")
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=message)
-        )
+            TextSendMessage(text=message))
 
-            )
+            
      
     else:
         print("Other message received: " + event.message.text)
