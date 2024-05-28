@@ -34,10 +34,13 @@ def fetch_top_watched_anime():
         rows = [row for row in csv_reader if len(row) == 4]  # 避免空數據行
         # 按照 "Watch Number" 排序，取前五高的動畫資訊
         sorted_rows = sorted(rows, key=lambda x: float(x[1]), reverse=True)[:5]
-        message = "以下是 Watch Number 前五高的動畫排行榜📊:\n\n"
+        message = "以下是本日播放次數前五名的動畫排行榜📊:\n\n"
         for index, row in enumerate(sorted_rows, start=1):
             name, watch_number, episode, link = row
-            message += f"{index}. {name}\n👀 觀看人數: {watch_number}\n🎬 集數: {episode}\n🔗 連結: {link}\n\n"
+            watch_number = int(watch_number)
+            # 將觀看人數以「萬」為單位表示
+            watch_number_str = f"{watch_number // 10000}萬"
+            message += f"{index}. {name}\n👀 觀看人數: {watch_number_str}\n🎬 集數: {episode}\n🔗 連結: {link}\n\n"
         return message
     except requests.exceptions.RequestException as e:
         print("Error fetching top watched anime:", e)
