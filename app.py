@@ -21,6 +21,22 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
+def read_csv_file(file_path):
+    data = []
+    with open(file_path, 'r', encoding='utf-8') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            data.append(row)
+    return data
+
+def display_play_rankings(data, user_name):
+    message = f"@{user_name} 播放排行榜如下：\n\n"
+    for entry in data:
+        message += f"Name: {entry['Name']}\n"
+        message += f"Watch Number: {entry['Watch Number']}\n"
+        message += f"Episode: {entry['Episode']}\n"
+        message += f"Link: {entry['Link']}\n\n"
+    return message
 
 
 def fetch_game_expo_info():
@@ -436,7 +452,13 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, template_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
-    
+    elif event.message.text == "播放排行榜":
+        print("播放排行榜按鈕點擊")
+        # 替换为你的CSV文件路径
+        file_path = 'your_file_path.csv'
+        data = read_csv_file(file_path)
+        message = display_play_rankings(data, user_name)
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
      
     else:
         print("Other message received: " + event.message.text)
