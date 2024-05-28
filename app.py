@@ -21,19 +21,31 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
+def read_csv_file(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # 檢查是否有錯誤發生
+        csv_data = response.text
+        return csv_data
+    except requests.exceptions.RequestException as e:
+        print("Error fetching CSV data:", e)
+        return None
 
-def format_anime_info_from_csv(csv_file_path):
-    # Load CSV file
-    anime_df = pd.read_csv(csv_file_path)
-
-    # Format the text message
-    formatted_text = "@使用者 您好(你好)\n揭曉今天播放次數最高的動畫排行榜 !\n\n"
-    for i, anime in anime_df.iterrows():
-        formatted_text += f"({i+1}) {anime['Name']}\n"
-        formatted_text += f"集數: {anime['Episode']}\n"
-        formatted_text += f"觀看次數: {int(anime['Watch Number'])}\n"
-        formatted_text += f"點我馬上看: {anime['Link']}\n\n"
-    return formatted_text.strip()
+def display_top_five_play_rankings(csv_content, category, exclude_list=None, start_index=1):
+    try:
+        csv_reader = csv.reader(csv_content.splitlines())
+        next(csv_reader)  # 跳過標題行
+        rows = [row for row in csv_reader if len(row) == 4 and row[0] not in (exclude_list or [])]  # 避免空數據行
+        sorted_rows = sorted(rows, key=lambda x: int(x[1]), reverse=True)  # 按觀看次數排序
+        top_five = sorted_rows[:5]  # 取觀看次數前五高的項目
+        message = f"這裡依照近期人氣為您推薦五部「{category}」類別動漫📺:\n\n"
+        for count, row in enumerate(top_five, start=start_index):
+            Name, Watch_Number, Episode, Link = row
+            message += f"{count}. 『{Name}』\n✨ 觀看次數: {Watch_Number}\n🗓 集數: {Episode}\n🔗 以下是觀看連結:\n{Link}\n\n"
+        return  message, top_five
+    except csv.Error as e:
+        print("Error parsing CSV:", e)
+        return None, []
 
 def fetch_game_expo_info():
     url = 'https://tgs.tca.org.tw/news_list.php?a=2&b=c'
@@ -450,11 +462,13 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     elif event.message.text == "播放排行榜":
         csv_file_path = 'https://raw.githubusercontent.com/weichen1357/linebot_openai/master/mnt/data/2024-05-28_anime_rankings.csv'
-        formatted_text = format_anime_info_from_csv(csv_file_path)
+        message, _ = display_top_five_play_rankings(read_csv_file(csv_file_path), "動漫")
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=formatted_text)
+            TextSendMessage(text=message)
         )
+
+            )
      
     else:
         print("Other message received: " + event.message.text)
