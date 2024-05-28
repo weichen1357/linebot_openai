@@ -21,13 +21,22 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
-def read_csv_file(file_path):
-    data = []
-    with open(file_path, 'r', encoding='utf-8') as file:
-        csv_reader = csv.DictReader(file)
+
+def read_csv_file(csv_url):
+    try:
+        response = requests.get(csv_url)
+        response.raise_for_status()  # 檢查是否有錯誤發生
+        csv_data = response.text
+
+        data = []
+        csv_reader = csv.DictReader(csv_data.splitlines())
         for row in csv_reader:
             data.append(row)
-    return data
+
+        return data
+    except requests.exceptions.RequestException as e:
+        print("Error fetching CSV data:", e)
+        return None
 
 def display_top_five_play_rankings(data, user_name):
     sorted_data = sorted(data, key=lambda x: int(x['Watch Number']), reverse=True)
@@ -40,6 +49,7 @@ def display_top_five_play_rankings(data, user_name):
         message += f"Episode: {entry['Episode']}\n"
         message += f"Link: {entry['Link']}\n\n"
     return message
+
 
 
 def fetch_game_expo_info():
@@ -458,10 +468,13 @@ def handle_message(event):
     elif event.message.text == "播放排行榜":
         print("播放排行榜按鈕點擊")
         # 替换为你的CSV文件路径
-        file_path = 'https://raw.githubusercontent.com/weichen1357/linebot_openai/master/2024-05-28_anime_rankings.csv'
-        data = read_csv_file(file_path)
-        message = display_play_rankings(data, user_name)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        csv_url = 'https://raw.githubusercontent.com/weichen1357/linebot_openai/master/2024-05-28_anime_rankings.csv'
+        data = read_csv_file(csv_url)
+        if data:
+            message = display_top_five_play_rankings(data, user_name)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取播放排行榜數據。"))
      
     else:
         print("Other message received: " + event.message.text)
