@@ -22,35 +22,18 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 user_data = {}
 
 
-def read_csv_file(csv_url):
-    try:
-        response = requests.get(csv_url)
-        response.raise_for_status()  # 檢查是否有錯誤發生
-        csv_data = response.text
+def format_anime_info_from_csv(csv_file_path):
+    # Load CSV file
+    anime_df = pd.read_csv(csv_file_path)
 
-        data = []
-        csv_reader = csv.DictReader(csv_data.splitlines())
-        for row in csv_reader:
-            data.append(row)
-
-        return data
-    except requests.exceptions.RequestException as e:
-        print("Error fetching CSV data:", e)
-        return None
-
-def display_top_five_play_rankings(data, user_name):
-    sorted_data = sorted(data, key=lambda x: int(x['Watch Number']), reverse=True)
-    top_five = sorted_data[:5]
-
-    message = f"@{user_name} 播放排行榜中觀看次數最高的五個項目如下：\n\n"
-    for entry in top_five:
-        message += f"Name: {entry['Name']}\n"
-        message += f"Watch Number: {entry['Watch Number']}\n"
-        message += f"Episode: {entry['Episode']}\n"
-        message += f"Link: {entry['Link']}\n\n"
-    return message
-
-
+    # Format the text message
+    formatted_text = "@使用者 您好(你好)\n揭曉今天播放次數最高的動畫排行榜 !\n\n"
+    for i, anime in anime_df.iterrows():
+        formatted_text += f"({i+1}) {anime['Name']}\n"
+        formatted_text += f"集數: {anime['Episode']}\n"
+        formatted_text += f"觀看次數: {int(anime['Watch Number'])}\n"
+        formatted_text += f"點我馬上看: {anime['Link']}\n\n"
+    return formatted_text.strip()
 
 def fetch_game_expo_info():
     url = 'https://tgs.tca.org.tw/news_list.php?a=2&b=c'
@@ -465,16 +448,13 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, template_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
-    elif event.message.text == "播放排行榜":
-        print("播放排行榜按鈕點擊")
-        # 替换为你的CSV文件路径
-        csv_url = 'https://raw.githubusercontent.com/weichen1357/linebot_openai/master/2024-05-28_anime_rankings.csv'
-        data = read_csv_file(csv_url)
-        if data:
-            message = display_top_five_play_rankings(data, user_name)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，無法獲取播放排行榜數據。"))
+     if event.message.text == "播放排行榜":
+        csv_file_path = 'https://raw.githubusercontent.com/weichen1357/linebot_openai/master/mnt/data/2024-05-28_anime_rankings.csv'
+        formatted_text = format_anime_info_from_csv(csv_file_path)
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=formatted_text)
+        )
      
     else:
         print("Other message received: " + event.message.text)
