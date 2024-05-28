@@ -448,7 +448,7 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, template_message)
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
-     if event.message.text == "播放排行榜":
+     elif event.message.text == "播放排行榜":
         csv_file_path = 'https://raw.githubusercontent.com/weichen1357/linebot_openai/master/mnt/data/2024-05-28_anime_rankings.csv'
         formatted_text = format_anime_info_from_csv(csv_file_path)
         line_bot_api.reply_message(
