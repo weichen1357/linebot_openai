@@ -465,7 +465,6 @@ def handle_message(event):
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"抱歉，無法獲取{year}年{season_dict[event.message.text]}季度的番劇列表。😢"))
     elif event.message.text == "播放排行榜":
-        user_name = event.source.user_id
         top_watched_anime = fetch_top_watched_anime(user_name)
         if top_watched_anime:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=top_watched_anime))
