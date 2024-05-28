@@ -47,6 +47,11 @@ def fetch_top_watched_anime():
 
         return message
 
+      except requests.exceptions.RequestException as e:
+        print("Error fetching top watched anime:", e)
+        return None
+
+
 
 
 def fetch_game_expo_info():
