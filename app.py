@@ -37,10 +37,8 @@ def fetch_top_watched_anime():
         message = "以下是本日播放次數前五名的動畫排行榜📊:\n\n"
         for index, row in enumerate(sorted_rows, start=1):
             name, watch_number, episode, link = row
-            watch_number = int(watch_number)
-            # 將觀看人數以「萬」為單位表示
-            watch_number_str = f"{watch_number // 10000}萬"
-            message += f"{index}. 『{name}』\n👀 觀看人數: {watch_number_str}\n🎬 集數: {episode}\n🔗 連結:\n{link}\n\n"
+            
+            message += f"{index}. 『{name}』\n👀 觀看人數: {watch_number}\n🎬 集數: {episode}\n🔗 連結:\n{link}\n\n"
         return message
     except requests.exceptions.RequestException as e:
         print("Error fetching top watched anime:", e)
