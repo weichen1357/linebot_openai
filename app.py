@@ -455,7 +455,7 @@ def handle_message(event):
     elif event.message.text == "播放排行榜":
         print("播放排行榜按鈕點擊")
         # 替换为你的CSV文件路径
-        file_path = 'your_file_path.csv'
+        file_path = 'https://github.com/weichen1357/linebot_openai/blob/master/2024-05-28_anime_rankings.csv'
         data = read_csv_file(file_path)
         message = display_play_rankings(data, user_name)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
