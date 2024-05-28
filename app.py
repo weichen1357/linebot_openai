@@ -21,7 +21,7 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
-def fetch_top_watched_anime():
+def fetch_top_watched_anime(user_name):
     csv_url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/2024-05-28_anime_rankings.csv"
     try:
         response = requests.get(csv_url)
@@ -36,7 +36,7 @@ def fetch_top_watched_anime():
         # 按照 "Watch Number" 排序，取前五高的動畫資訊
         sorted_rows = sorted(rows, key=lambda x: float(x[1]), reverse=True)[:5]
 
-        message = f"@{user_name} 您好\n揭曉今天播放次數最高的動畫排行榜📊:\n\n"
+        message = f"@{user_name} 您好\n揭曉本日播放次數最高的動畫排行榜📊:\n\n"
         for index, row in enumerate(sorted_rows, start=1):
             name, watch_number, episode, link = row
             watch_number = int(watch_number)
