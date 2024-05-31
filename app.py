@@ -17,7 +17,7 @@ from linebot.models import TextSendMessage
 from google.cloud import vision
 import io
 import sqlite3
-
+from google.colab import files
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
