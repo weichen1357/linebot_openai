@@ -14,6 +14,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from googletrans import Translator
 from linebot.models import TextSendMessage
+from google.cloud import vision
+import io
+import sqlite3
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
