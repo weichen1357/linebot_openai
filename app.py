@@ -33,7 +33,6 @@ uploaded = files.upload()
 
 # 獲取上傳文件名並設置環境變數
 service_account_key = list(uploaded.keys())[0]
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = https://github.com/weichen1357/linebot_openai/edit/master/app.py
 
 from google.cloud import vision
 import io
