@@ -22,7 +22,7 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 user_data = {}
 
 # 设置 Google Cloud Vision API 客户端
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "your-service-account-file.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "your-service-account-file(1).json"
 client = vision.ImageAnnotatorClient()
 
 def test_vision_api(image_path):
