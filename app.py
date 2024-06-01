@@ -24,6 +24,75 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
+# 设置 Google Cloud Vision API 客户端
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "your-service-account-file(1).json"
+client = vision.ImageAnnotatorClient()
+
+def test_vision_api(image_path):
+    with io.open(image_path, 'rb') as image_file:
+        content = image_file.read()
+
+    image = vision.Image(content=content)
+    image_context = vision.ImageContext(language_hints=['zh'])
+    response = client.label_detection(image=image, image_context=image_context)
+    labels = response.label_annotations
+
+    label_descriptions = [label.description for label in labels]
+    for description in label_descriptions:
+        print(description)
+
+    return label_descriptions
+
+def search_database(label_descriptions):
+    conn = sqlite3.connect('anime_characters.db')
+    cursor = conn.cursor()
+
+    query = "SELECT name, anime, url, about FROM characters"
+    cursor.execute(query)
+    results = cursor.fetchall()
+
+    matching_results = []
+    for row in results:
+        name, anime, url, about = row
+        if any(keyword in about for keyword in label_descriptions):
+            matching_results.append((name, anime, url))
+
+    conn.close()
+    return matching_results
+
+def setup_database():
+    conn = sqlite3.connect('anime_characters.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS characters (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            anime TEXT NOT NULL,
+            url TEXT NOT NULL,
+            about TEXT
+        )
+    ''')
+
+    cursor.executemany('''
+        INSERT INTO characters (name, anime, url, about)
+        VALUES (?, ?, ?, ?)
+    ''', [
+        ('五條悟', '咒術迴戰', 'https://m.manhuagui.com/comic/28004/', 'Long hair'),
+        ('多啦A夢', '多啦A夢', 'https://www.ofiii.com/section/114', 'Graphics'),
+        ('桐谷和人', '刀劍神域', 'https://ani.gamer.com.tw/animeVideo.php?sn=926', 'Cg artwork'),
+        ('工藤新一', '名偵探柯南', 'https://ani.gamer.com.tw/animeVideo.php?sn=30234', 'Chin'),
+        ('魯夫', '航海王', 'https://gimy.ai/eps/252248-4-1020.html', 'Mammal'),
+        ('鳴人', '火影忍者', 'https://ani.gamer.com.tw/animeVideo.php?sn=16844', 'Font'),
+    ])
+
+    conn.commit()
+    conn.close()
+
+# 设置数据库
+setup_database()
+
+
 def fetch_top_watched_anime():
     csv_url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/2024-05-28_anime_rankings.csv"
     try:
