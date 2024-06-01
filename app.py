@@ -150,28 +150,27 @@ def handle_message(event):
         )
         line_bot_api.reply_message(event.reply_token, buttons_template)
     elif event.message.text == "上传图片":
-        # 上傳測試圖片
-        uploaded_image = files.upload()
+        # 上传图片时应从 Line 服务器获取图片
+        message_content = line_bot_api.get_message_content(event.message.id)
+        image_path = f"{event.message.id}.jpg"
+        with open(image_path, 'wb') as fd:
+            for chunk in message_content.iter_content():
+                fd.write(chunk)
 
-        # 獲取上傳文件名
-        image_path = list(uploaded_image.keys())[0]
-
-        # 執行測試
         label_descriptions = test_vision_api(image_path)
         if label_descriptions:
             results = search_database(label_descriptions)
             if results:
-                for name, anime, url in results:
-                    message = f"此動漫人物是{name}，出自{anime}，以下是觀賞連結🔗：{url}"
-                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+                messages = [TextSendMessage(text=f"此动漫人物是{name}，出自{anime}，以下是观赏链接🔗：{url}") for name, anime, url in results]
+                line_bot_api.reply_message(event.reply_token, messages)
             else:
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未找到該角色的相關資訊。"))
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未找到该角色的相关信息。"))
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未能識別該圖像中的角色。"))
-            
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未能识别该图像中的角色。"))
     else:
         print("Other message received: " + event.message.text)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？🤔"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再说一遍吗？🤔"))
+
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
