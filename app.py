@@ -30,6 +30,17 @@ user_data = {}
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "your-service-account-file(1).json"
 client = vision.ImageAnnotatorClient()
 
+def fetch_character_info(character_name):
+    conn = sqlite3.connect('anime_characters.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT name, anime, url FROM characters WHERE name=?", (character_name,))
+    result = cursor.fetchone()
+
+    conn.close()
+    return result
+
+# 图像识别函数
 def test_vision_api(image_path):
     with io.open(image_path, 'rb') as image_file:
         content = image_file.read()
@@ -40,9 +51,6 @@ def test_vision_api(image_path):
     labels = response.label_annotations
 
     label_descriptions = [label.description for label in labels]
-    for description in label_descriptions:
-        print(description)
-
     return label_descriptions
 
 def search_database(label_descriptions):
@@ -543,47 +551,51 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抓取動畫排行榜時出錯。請稍後再試。"))
     elif event.message.text == "拍照搜一下":
         reply_message = TextSendMessage(
-            text=f"@{user_name} 您好📷，想看卻不知道是甚麼動漫名稱嗎？上傳圖片由我為您解答。"
+            text=f"@{user_name} 您好📷，想看却不知道是什么动漫名稱吗？上传图片由我为您解答。"
         )
         line_bot_api.reply_message(event.reply_token, reply_message)
-
-        # 設置狀態以等待用戶上傳圖片
-        user_data[user_id]['waiting_for_image'] = True
-
+        user_data[user_id] = {'waiting_for_image': True}
     elif 'waiting_for_image' in user_data[user_id] and user_data[user_id]['waiting_for_image']:
         if event.message.type == "image":
             image_message_id = event.message.id
             message_content = line_bot_api.get_message_content(image_message_id)
-
             image_path = f"temp_image_{image_message_id}.jpg"
             with open(image_path, 'wb') as f:
                 for chunk in message_content.iter_content():
                     f.write(chunk)
 
             try:
+                # 定义指定图片链接对应的角色名称
+                image_to_character = {
+                    "https://github.com/weichen1357/linebot_openai/blob/master/%E4%BA%94%E6%A2%9D%E6%82%9F.jpg": "五條悟",
+                    "https://github.com/weichen1357/linebot_openai/blob/master/%E4%BA%94%E6%A2%9D%E6%82%9F.jpg": "多啦A夢",
+                    "https://github.com/weichen1357/linebot_openai/blob/master/%E5%B7%A5%E8%97%A4%E6%96%B0%E4%B8%80.png": "工藤新一",
+                    "https://github.com/weichen1357/linebot_openai/blob/master/%E6%A1%90%E8%B0%B7%E5%92%8C%E4%BA%BA.jpg": "桐谷和人",
+                    "https://github.com/weichen1357/linebot_openai/blob/master/%E9%B3%B4%E4%BA%BA.jpg": "鳴人"
+                }
+
+                # 获取图片描述
                 label_descriptions = test_vision_api(image_path)
-                if label_descriptions:
-                    results = search_database(label_descriptions)
-                    if results:
-                        response_message = ""
-                        for name, anime, url in results:
-                            response_message += f"此動漫人物是{name}，出自{anime}，以下是觀賞連結🔗：{url}\n"
+                
+                # 检查图片链接是否在指定列表中，如果在则获取相应角色信息
+                character_name = image_to_character.get(event.message.text)
+                if character_name:
+                    character_info = fetch_character_info(character_name)
+                    if character_info:
+                        name, anime, url = character_info
+                        response_message = f"此动漫人物是{name}，出自{anime}，以下是观赏链接🔗：{url}"
                         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
                     else:
-                        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未找到該角色的相關資訊。"))
+                        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未找到该角色的相关信息。"))
                 else:
-                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未能識別該圖像中的角色。"))
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未能识别该图像中的角色。"))
             except Exception as e:
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"影像辨識過程中出錯: {str(e)}"))
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"影像辨识过程中出错: {str(e)}"))
 
             os.remove(image_path)
-
-            user_data[user_id]['waiting_for_image'] = False
-
+            del user_data[user_id]['waiting_for_image']
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請上傳圖片以進行影像辨識。"))
-
-    
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="请上传图片以进行影像辨识。"))
     else:
         print("Other message received: " + event.message.text)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="我不明白你的意思，可以再說一遍嗎？🤔"))
