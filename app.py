@@ -28,29 +28,12 @@ user_data = {}
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "your-service-account-file(1).json"
 client = vision.ImageAnnotatorClient()
 
-# 上傳你的服務帳戶密鑰文件
-uploaded = files.upload()
-
-# 獲取上傳文件名並設置環境變數
-service_account_key = list(uploaded.keys())[0]
-
-from google.cloud import vision
-import io
-import sqlite3
-from google.colab import files
-
-# 创建 ImageAnnotatorClient 实例
-client = vision.ImageAnnotatorClient()
-
 def test_vision_api(image_path):
     with io.open(image_path, 'rb') as image_file:
         content = image_file.read()
 
     image = vision.Image(content=content)
-
-    # 设置 LanguageHints 参数为中文
     image_context = vision.ImageContext(language_hints=['zh'])
-
     response = client.label_detection(image=image, image_context=image_context)
     labels = response.label_annotations
 
@@ -64,13 +47,15 @@ def search_database(label_descriptions):
     conn = sqlite3.connect('anime_characters.db')
     cursor = conn.cursor()
 
-    query = "SELECT name, anime, url FROM characters WHERE about LIKE ?"
-    matching_results = []
+    query = "SELECT name, anime, url, about FROM characters"
+    cursor.execute(query)
+    results = cursor.fetchall()
 
-    for keyword in label_descriptions:
-        cursor.execute(query, ('%' + keyword + '%',))
-        results = cursor.fetchall()
-        matching_results.extend(results)
+    matching_results = []
+    for row in results:
+        name, anime, url, about = row
+        if any(keyword in about for keyword in label_descriptions):
+            matching_results.append((name, anime, url))
 
     conn.close()
     return matching_results
@@ -93,7 +78,7 @@ def setup_database():
         INSERT INTO characters (name, anime, url, about)
         VALUES (?, ?, ?, ?)
     ''', [
-       ('五條悟', '咒術迴戰', 'https://m.manhuagui.com/comic/28004/', 'Long hair'),
+        ('五條悟', '咒術迴戰', 'https://m.manhuagui.com/comic/28004/', 'Long hair'),
         ('多啦A夢', '多啦A夢', 'https://www.ofiii.com/section/114', 'Graphics'),
         ('桐谷和人', '刀劍神域', 'https://ani.gamer.com.tw/animeVideo.php?sn=926', 'Cg artwork'),
         ('工藤新一', '名偵探柯南', 'https://ani.gamer.com.tw/animeVideo.php?sn=30234', 'Chin'),
@@ -104,7 +89,7 @@ def setup_database():
     conn.commit()
     conn.close()
 
-# 設置資料庫
+# 设置数据库
 setup_database()
 
 
@@ -165,11 +150,6 @@ def handle_message(event):
         )
         line_bot_api.reply_message(event.reply_token, buttons_template)
     elif event.message.text == "上传图片":
-        reply_message = TextSendMessage(
-            text=f"@{user_name} 请上传一张动漫图片，我会帮您识别出人物并提供相关信息和视频链接。"
-        )
-        line_bot_api.reply_message(event.reply_token, reply_message)
-
         # 上傳測試圖片
         uploaded_image = files.upload()
 
