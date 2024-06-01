@@ -17,6 +17,7 @@ from linebot.models import TextSendMessage
 from google.cloud import vision
 import io
 import sqlite3
+from google.colab import files
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
@@ -555,9 +556,11 @@ def handle_message(event):
             message_content = line_bot_api.get_message_content(image_message_id)
 
             # 將圖片保存到本地
-            image_path = f"temp_image_{user_id}.jpg"
-            with open(image_path, 'wb') as f:
-                f.write(message_content.content)
+            # 上傳測試圖片
+            uploaded_image = files.upload()
+
+            # 獲取上傳文件名
+            image_path = list(uploaded_image.keys())[0]
 
             # 執行影像辨識
             label_descriptions = test_vision_api(image_path)
