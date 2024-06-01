@@ -24,9 +24,6 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
-
-
-
 def fetch_top_watched_anime():
     csv_url = "https://raw.githubusercontent.com/weichen1357/linebot_openai/master/2024-05-28_anime_rankings.csv"
     try:
