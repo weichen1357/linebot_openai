@@ -5,6 +5,5 @@ gunicorn
 bs4
 selenium
 by
-pandas==1.3.3
+pandas
 googletrans==4.0.0-rc1
-google-cloud
