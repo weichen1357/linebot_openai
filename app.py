@@ -556,9 +556,11 @@ def handle_message(event):
             message_content = line_bot_api.get_message_content(image_message_id)
 
             # 將圖片保存到本地
-            image_path = f"temp_image_{user_id}.jpg"
+            # 將圖片暫存
+            image_path = f"temp_image_{image_message_id}.jpg"
             with open(image_path, 'wb') as f:
-                f.write(message_content.content)
+                for chunk in message_content.iter_content():
+                    f.write(chunk)
             # 執行影像辨識
             label_descriptions = test_vision_api(image_path)
             if label_descriptions:
