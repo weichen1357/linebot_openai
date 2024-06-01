@@ -539,6 +539,28 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=top_watched_anime))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抓取動畫排行榜時出錯。請稍後再試。"))
+     elif event.message.text == "拍照搜一下":
+        print("拍照搜一下 button clicked")
+        buttons_template = TemplateSendMessage(
+            alt_text='拍照搜一下',
+            template=ButtonsTemplate(
+                title='拍照搜一下',
+                text=f'@{user_name} 请上传一张动漫图片，我会帮您识别出人物并提供相关信息和视频链接。',
+                actions=[
+                    MessageAction(
+                        label='上传图片',
+                        text='上传图片'
+                    )
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token, buttons_template)
+    elif event.message.text == "上传图片":
+        reply_message = TextSendMessage(
+            text=f"@{user_name} 请上传一张动漫图片，我会帮您识别出人物并提供相关信息和视频链接。"
+        )
+        line_bot_api.reply_message(event.reply_token, reply_message)
+
     
     else:
         print("Other message received: " + event.message.text)
