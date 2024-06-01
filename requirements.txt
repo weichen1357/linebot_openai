@@ -9,3 +9,4 @@ pandas
 googletrans==4.0.0-rc1
 google-cloud-vision
 files
+google.colab
