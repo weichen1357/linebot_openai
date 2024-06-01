@@ -551,39 +551,36 @@ def handle_message(event):
         user_data[user_id]['waiting_for_image'] = True
 
     elif 'waiting_for_image' in user_data[user_id] and user_data[user_id]['waiting_for_image']:
-        # 如果正在等待用戶上傳圖片
         if event.message.type == "image":
             image_message_id = event.message.id
             message_content = line_bot_api.get_message_content(image_message_id)
 
-            # 將圖片保存到本地
-            # 將圖片暫存
             image_path = f"temp_image_{image_message_id}.jpg"
             with open(image_path, 'wb') as f:
                 for chunk in message_content.iter_content():
                     f.write(chunk)
-            # 執行影像辨識
-            label_descriptions = test_vision_api(image_path)
-            if label_descriptions:
-                results = search_database(label_descriptions)
-                if results:
-                    response_message = ""
-                    for name, anime, url in results:
-                        response_message += f"此動漫人物是{name}，出自{anime}，以下是觀賞連結🔗：{url}\n"
-                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-                else:
-                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未找到該角色的相關資訊。"))
-            else:
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未能識別該圖像中的角色。"))
 
-            # 刪除暫存圖片
+            try:
+                label_descriptions = test_vision_api(image_path)
+                if label_descriptions:
+                    results = search_database(label_descriptions)
+                    if results:
+                        response_message = ""
+                        for name, anime, url in results:
+                            response_message += f"此動漫人物是{name}，出自{anime}，以下是觀賞連結🔗：{url}\n"
+                        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+                    else:
+                        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未找到該角色的相關資訊。"))
+                else:
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text="未能識別該圖像中的角色。"))
+            except Exception as e:
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"影像辨識過程中出錯: {str(e)}"))
+
             os.remove(image_path)
 
-            # 將狀態設置為不再等待用戶上傳圖片
             user_data[user_id]['waiting_for_image'] = False
 
         else:
-            # 如果用戶未上傳圖片，發送提示訊息
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請上傳圖片以進行影像辨識。"))
 
     
