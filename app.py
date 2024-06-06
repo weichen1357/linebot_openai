@@ -17,7 +17,7 @@ from linebot.models import TextSendMessage
 from google.cloud import vision
 import io
 import sqlite3
-from google.colab import files
+
 
 
 
@@ -27,12 +27,8 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
-# 上傳你的服務帳戶密鑰文件
-uploaded = files.upload()
-
-# 獲取上傳文件名並設置環境變數
-service_account_key = list(uploaded.keys())[0]
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "your-service-account-file(1).json"
+service_account_key = "your-service-account-file(1).json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = service_account_key
 
 # Google Vision API client
 client = vision.ImageAnnotatorClient()
