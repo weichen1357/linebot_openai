@@ -17,6 +17,7 @@ from linebot.models import TextSendMessage
 from google.cloud import vision
 import io
 import sqlite3
+from google.colab import files
 
 
 
