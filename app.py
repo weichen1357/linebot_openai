@@ -545,6 +545,8 @@ def handle_message(event):
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抓取動畫排行榜時出錯。請稍後再試。"))
     elif event.message.text == "拍照搜一下":
+        profile = line_bot_api.get_profile(event.source.user_id)
+        user_name = profile.display_name
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(
@@ -568,7 +570,7 @@ def handle_image_message(event):
     if label_descriptions:
         results = search_database(label_descriptions)
         if results:
-            response_text = "\n".join([f"此動漫人物是『{name}』，出自『{anime}』，以下是觀賞連結🔗：{url}" for name, anime, url in results])
+            response_text = "\n".join([f"此動漫人物是『{name}』，出自『{anime}』\n以下是觀賞連結🔗：{url}" for name, anime, url in results])
         else:
             response_text = "未找到該角色的相關資訊。"
     else:
