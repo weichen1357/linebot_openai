@@ -548,7 +548,7 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(
-                text="＠使用者您好,想看卻不知道是什麼動漫名稱嗎？上傳圖片由我們來替你解答吧！"
+                text="＠{user_name}您好,想看卻不知道是什麼動漫名稱嗎？上傳圖片由我們來替你解答吧！"
             )
         )
     else:
@@ -568,7 +568,7 @@ def handle_image_message(event):
     if label_descriptions:
         results = search_database(label_descriptions)
         if results:
-            response_text = "\n".join([f"此動漫人物是{name}，出自{anime}，以下是觀賞連結🔗：{url}" for name, anime, url in results])
+            response_text = "\n".join([f"此動漫人物是『{name}』，出自『{anime}』，以下是觀賞連結🔗：{url}" for name, anime, url in results])
         else:
             response_text = "未找到該角色的相關資訊。"
     else:
