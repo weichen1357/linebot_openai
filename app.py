@@ -550,7 +550,7 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(
-                text="＠{user_name}您好,想看卻不知道是什麼動漫名稱嗎？上傳圖片由我們來替你解答吧！"
+                text=f"＠{user_name}您好,想看卻不知道是什麼動漫名稱嗎？上傳圖片由我們來替你解答吧！"
             )
         )
     else:
