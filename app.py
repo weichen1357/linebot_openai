@@ -27,7 +27,7 @@ handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 user_data = {}
 
-service_account_key = "your-service-account-file(1).json"
+service_account_key = "https://github.com/weichen1357/linebot_openai/blob/master/your-service-account-file(1).json"
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = service_account_key
 
 # Google Vision API client
