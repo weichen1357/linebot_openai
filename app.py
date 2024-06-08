@@ -544,7 +544,7 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=top_watched_anime))
         else:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抓取動畫排行榜時出錯。請稍後再試。"))
-    elif event.message.text == "拍照搜一下":
+    elif event.message.text == "照片搜一下":
         profile = line_bot_api.get_profile(event.source.user_id)
         user_name = profile.display_name
         line_bot_api.reply_message(
